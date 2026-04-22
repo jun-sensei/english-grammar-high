@@ -491,7 +491,11 @@
                               <div className="font-bold mb-1">解答： {q.answer}</div>
                               {q.explanation && (
                                 <div className="mt-2 text-gray-700 font-normal border-t border-red-200 pt-2">
-                                  <span className="font-semibold text-indigo-700">解説：</span> {q.explanation}
+                                  <span className="font-semibold text-indigo-700 flex items-center gap-1 mb-1">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    解説：
+                                  </span>
+                                  <span className="block ml-5 leading-relaxed">{q.explanation}</span>
                                 </div>
                               )}
                             </div>
