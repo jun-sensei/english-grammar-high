@@ -58,15 +58,18 @@
     const IconSave = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
     const IconGraduation = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
 
-    // --- ランダム語彙辞書 ---
+    // --- ランダム語彙辞書（大幅拡張版） ---
     const dict = {
-      names_m: ["Tom", "Ken", "John", "Bob", "Mike", "David", "Jim", "Paul", "Kevin", "Bill", "Mark"],
-      names_f: ["Mary", "Yumi", "Lucy", "Jane", "Nancy", "Emma", "Lisa", "Ann", "Kate", "Betty", "Susan"],
-      cities: ["Tokyo", "London", "New York", "Paris", "Kyoto", "Canada", "Australia", "Hawaii", "Sydney", "Boston", "Osaka"],
-      time_past: ["yesterday", "last night", "last week", "two days ago", "this morning", "a few days ago", "last Sunday"],
-      time_future: ["tomorrow", "next week", "soon", "this evening", "next year", "next Sunday"],
-      items: ["a book", "a dictionary", "some flowers", "a watch", "a CD", "a new computer", "an umbrella", "a camera", "a bag"],
-      sports: ["tennis", "soccer", "baseball", "basketball", "volleyball", "badminton"],
+      names_m: ["Tom", "Ken", "John", "Bob", "Mike", "David", "Jim", "Paul", "Kevin", "Bill", "Mark", "George", "Steve", "Alex"],
+      names_f: ["Mary", "Yumi", "Lucy", "Jane", "Nancy", "Emma", "Lisa", "Ann", "Kate", "Betty", "Susan", "Alice", "Meg", "Sarah"],
+      cities: ["Tokyo", "London", "New York", "Paris", "Kyoto", "Canada", "Australia", "Hawaii", "Sydney", "Boston", "Osaka", "Kobe", "Seattle"],
+      time_past: ["yesterday", "last night", "last week", "two days ago", "this morning", "a few days ago", "last Sunday", "last year", "last month"],
+      time_future: ["tomorrow", "next week", "soon", "this evening", "next year", "next Sunday", "in a few days"],
+      items: ["a book", "a dictionary", "some flowers", "a watch", "a CD", "a new computer", "an umbrella", "a camera", "a bag", "a smart phone", "a wallet", "a coat"],
+      sports: ["tennis", "soccer", "baseball", "basketball", "volleyball", "badminton", "golf", "rugby"],
+      foods: ["an apple", "some cake", "a sandwich", "pizza", "sushi", "curry", "some cookies", "steak"],
+      subjects: ["English", "math", "history", "science", "music", "art"],
+      adjectives: ["happy", "sad", "angry", "tired", "busy", "sleepy", "hungry", "thirsty", "excited"]
     };
 
     const r = (array) => array[Math.floor(Math.random() * array.length)];
@@ -76,8 +79,10 @@
     const rCity = () => r(dict.cities);
     const rItem = () => r(dict.items);
     const rSport = () => r(dict.sports);
+    const rFood = () => r(dict.foods);
     const rPast = () => r(dict.time_past);
     const rFut = () => r(dict.time_future);
+    const rAdj = () => r(dict.adjectives);
 
     const availableChapters = [
       { id: 1, title: "第1章 文型" }, { id: 2, title: "第2章 文の種類" }, { id: 3, title: "第3章 基本時制" },
@@ -91,286 +96,679 @@
     ];
     const difficulties = ["基礎", "標準", "応用"];
 
-    // --- 問題データベース（大量拡充版） ---
+    // --- 問題データベース（大量のバリエーションを返す関数） ---
+    // 一つの generator 関数が呼ばれるたびに、豊富な組み合わせから完全にランダムな問題文を構築します。
     const questionBank = [];
     const addQ = (ch, diff, inst, genFn) => {
       questionBank.push({ chapter: ch, difficulty: diff, instruction: inst, generate: genFn });
     };
 
-    // 第1章 文型
-    addQ(1, "基礎", "文型", () => { const n=rName(); return { text:`次の英文の S, V, C を指摘しなさい。\n${n} is a student.`, answer:`S: ${n}, V: is, C: a student`, explanation:`be動詞は主語(S)と補語(C)をイコール関係で結ぶ第2文型(SVC)を作ります。` }; });
-    addQ(1, "基礎", "文型", () => ({ text:`次の英文の S, V を指摘しなさい。\nThe dog runs fast.`, answer:`S: The dog, V: runs`, explanation:`run(走る)のように目的語を持たない自動詞は、第1文型(SV)を作ります。fast は修飾語(M)です。` }));
-    addQ(1, "基礎", "文型", () => ({ text:`次の英文の S, V, C を指摘しなさい。\nThe story sounds interesting.`, answer:`S: The story, V: sounds, C: interesting`, explanation:`sound C で「Cのように聞こえる/思われる」という第2文型(SVC)を作ります。` }));
-    addQ(1, "基礎", "文型", () => { const n=rName(), s=rSport(); return { text:`次の英文の S, V, O を指摘しなさい。\n${n} likes playing ${s}.`, answer:`S: ${n}, V: likes, O: playing ${s}`, explanation:`like(好む)は動作の対象となる目的語(O)を必要とする他動詞なので第3文型(SVO)を作ります。` }; });
-    addQ(1, "基礎", "文型判別", () => ({ text:`次の英文の文型(第何文型か)を答えなさい。\nThere is a book on the table.`, answer:`第1文型`, explanation:`There is/are 構文は「Sがある/いる」という第1文型(SV)になります。主語はその後ろの a book です。` }));
-    addQ(1, "標準", "書き換え", () => { const n=rName(), i=rItem(); return { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\n${n} gave me ${i}.\n= ${n} gave ${i} (   ) me.`, answer:`to`, explanation:`give O1 O2 を第3文型に書き換える時は give O2 to O1 の形を使います。` }; });
-    addQ(1, "標準", "書き換え", () => { const n=rName(), i=rItem(); return { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\n${n} bought me ${i}.\n= ${n} bought ${i} (   ) me.`, answer:`for`, explanation:`buy O1 O2 を第3文型に書き換える時は buy O2 for O1 を使います。「〜のために」という意味合いです。` }; });
-    addQ(1, "標準", "和訳", () => { const n=rName(); return { text:`次の英文を日本語になおしなさい。\nWe call the girl ${n}.`, answer:`私たちはその少女を${n}と呼びます。`, explanation:`call O C で「OをCと呼ぶ」という第5文型(SVOC)を作ります。O=Cの関係が成り立ちます。` }; });
-    addQ(1, "標準", "和訳", () => ({ text:`次の英文を日本語になおしなさい。\nThe news made her happy.`, answer:`その知らせは彼女を幸せにした。`, explanation:`make O C で「OをC(の状態)にする」という第5文型(SVOC)を作ります。` }));
-    addQ(1, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように並べかえなさい。\n太陽は私たちに光と熱を与えてくれます。\n( gives / and / sun / heat / light / us / the / . )`, answer:`The sun gives us light and heat.`, explanation:`S(The sun) + V(gives) + O1(us) + O2(light and heat) の第4文型に並べ替えます。` }));
-    addQ(1, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように並べかえなさい。\nこの辞書を私に貸してくれませんか。\n( lend / this dictionary / me / will / you / ? )`, answer:`Will you lend me this dictionary?`, explanation:`Will you lend + O1(me) + O2(this dictionary)? で「O1にO2を貸す」という第4文型の疑問文を作ります。` }));
-    addQ(1, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように並べかえなさい。\n彼女は部屋を暖かくしておいた。\n( warm / she / room / the / kept / . )`, answer:`She kept the room warm.`, explanation:`keep O C で「OをCの状態に保つ」という第5文型を作ります。` }));
+    // --- 第1章 文型 ---
+    addQ(1, "基礎", "文型(SVC)", () => { 
+        const n=rName(), adj=rAdj(); 
+        return { text:`次の英文の S, V, C を指摘しなさい。\n${n} is ${adj}.`, answer:`S: ${n}, V: is, C: ${adj}`, explanation:`be動詞は主語(S)と補語(C)をイコール関係で結ぶ第2文型(SVC)を作ります。` }; 
+    });
+    addQ(1, "基礎", "文型(SVO)", () => { 
+        const n=rName(), s=rSport(); 
+        return { text:`次の英文の S, V, O を指摘しなさい。\n${n} likes playing ${s}.`, answer:`S: ${n}, V: likes, O: playing ${s}`, explanation:`like(好む)は動作の対象となる目的語(O)を必要とする他動詞なので第3文型(SVO)を作ります。` }; 
+    });
+    addQ(1, "基礎", "文型判別", () => {
+        const i=rItem();
+        return r([
+          { text:`次の英文の文型(第何文型か)を答えなさい。\nThere is ${i} on the table.`, answer:`第1文型`, explanation:`There is/are 構文は「Sがある/いる」という第1文型(SV)になります。主語はその後ろの ${i} です。` },
+          { text:`次の英文の文型(第何文型か)を答えなさい。\nThe story sounds interesting.`, answer:`第2文型`, explanation:`sound C で「Cのように聞こえる」という第2文型(SVC)を作ります。` }
+        ]);
+    });
+    addQ(1, "標準", "書き換え(第4→第3)", () => { 
+        const n1=rName(), n2=rName(), i=rItem(); 
+        return r([
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\n${n1} gave ${n2} ${i}.\n= ${n1} gave ${i} (   ) ${n2}.`, answer:`to`, explanation:`give O1 O2 を第3文型に書き換える時は give O2 to O1 の形を使います。` },
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\n${n1} bought ${n2} ${i}.\n= ${n1} bought ${i} (   ) ${n2}.`, answer:`for`, explanation:`buy O1 O2 を第3文型に書き換える時は buy O2 for O1 を使います。` },
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\n${n1} showed ${n2} ${i}.\n= ${n1} showed ${i} (   ) ${n2}.`, answer:`to`, explanation:`show O1 O2 を第3文型に書き換える時は show O2 to O1 の形を使います。` }
+        ]);
+    });
+    addQ(1, "標準", "和訳(第5文型)", () => { 
+        const n1=rName(), n2=rName(), adj=rAdj(); 
+        return r([
+          { text:`次の英文を日本語になおしなさい。\nWe call the girl ${n2}.`, answer:`私たちはその少女を${n2}と呼びます。`, explanation:`call O C で「OをCと呼ぶ」という第5文型(SVOC)を作ります。O=Cの関係が成り立ちます。` },
+          { text:`次の英文を日本語になおしなさい。\nThe news made ${n1} ${adj}.`, answer:`その知らせは${n1}を${adj}な気分にさせた。`, explanation:`make O C で「OをC(の状態)にする」という第5文型(SVOC)を作ります。` }
+        ]);
+    });
+    addQ(1, "応用", "並べかえ(第4文型)", () => {
+        const i=rItem();
+        return r([
+          { text:`日本文の意味を表す英文になるように並べかえなさい。\n太陽は私たちに光と熱を与えてくれます。\n( gives / and / sun / heat / light / us / the / . )`, answer:`The sun gives us light and heat.`, explanation:`S(The sun) + V(gives) + O1(us) + O2(light and heat) の第4文型に並べ替えます。` },
+          { text:`日本文の意味を表す英文になるように並べかえなさい。\nこの本を私に貸してくれませんか。\n( lend / this book / me / will / you / ? )`, answer:`Will you lend me this book?`, explanation:`Will you lend + O1(me) + O2(this book)? で「O1にO2を貸す」という第4文型の疑問文を作ります。` }
+        ]);
+    });
+    addQ(1, "応用", "並べかえ(第5文型)", () => {
+        return r([
+          { text:`日本文の意味を表す英文になるように並べかえなさい。\n彼女は部屋を暖かくしておいた。\n( warm / she / room / the / kept / . )`, answer:`She kept the room warm.`, explanation:`keep O C で「OをCの状態に保つ」という第5文型を作ります。` },
+          { text:`日本文の意味を表す英文になるように並べかえなさい。\n彼らはその犬をポチと名付けた。\n( named / dog / they / Pochi / the / . )`, answer:`They named the dog Pochi.`, explanation:`name O C で「OをCと名付ける」という第5文型を作ります。` }
+        ]);
+    });
 
-    // 第2章 文の種類
-    addQ(2, "基礎", "否定文", () => { const n=rName(), c=rCity(); return { text:`否定文に書きかえなさい。\n${n} is from ${c}.`, answer:`${n} is not [isn't] from ${c}.`, explanation:`be動詞の否定文は、be動詞の直後に not を置きます。` }; });
-    addQ(2, "基礎", "否定文", () => { const n=rName(); return { text:`否定文に書きかえなさい。\n${n} lives in this town.`, answer:`${n} does not [doesn't] live in this town.`, explanation:`一般動詞の現在形(3人称単数)の否定文は、does not (doesn't) + 動詞の原形 にします。` }; });
-    addQ(2, "基礎", "疑問文", () => { const n=rName(); return { text:`疑問文に書きかえなさい。\n${n} went to the concert.`, answer:`Did ${n} go to the concert?`, explanation:`一般動詞の過去形の疑問文は文頭に Did を置き、動詞は原形(go)に戻します。` }; });
-    addQ(2, "基礎", "疑問文", () => ({ text:`疑問文に書きかえなさい。\nThey are busy now.`, answer:`Are they busy now?`, explanation:`be動詞の文は、be動詞を文頭に出して疑問文を作ります。` }));
-    addQ(2, "標準", "付加疑問文", () => { const n=rNameM(); return { text:`（　）に適する語を入れて付加疑問文を完成しなさい。\n${n} isn't a student, (   ) (   )?`, answer:`is he`, explanation:`前の文が否定文なので、後ろは肯定の付加疑問(is he)をつけます。` }; });
-    addQ(2, "標準", "付加疑問文", () => { const n=rNameF(); return { text:`（　）に適する語を入れて付加疑問文を完成しなさい。\n${n} likes music, (   ) (   )?`, answer:`doesn't she`, explanation:`前が肯定の一般動詞なので、後ろは否定の付加疑問(doesn't she)をつけます。` }; });
-    addQ(2, "標準", "感嘆文", () => ({ text:`（　）に適する語を入れて感嘆文を完成しなさい。\n(   ) beautiful this flower is!`, answer:`How`, explanation:`How + 形容詞/副詞 + (S + V)! の語順で「なんて〜なんでしょう」という感嘆文を作ります。` }));
-    addQ(2, "標準", "感嘆文", () => ({ text:`（　）に適する語を入れて感嘆文を完成しなさい。\n(   ) a big dog he has!`, answer:`What`, explanation:`What + (a/an) + 形容詞 + 名詞 + (S + V)! の語順で名詞を強調する感嘆文を作ります。` }));
-    addQ(2, "応用", "書き換え", () => ({ text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nYou mustn't eat between meals.\n= (   ) eat between meals.`, answer:`Don't`, explanation:`「〜してはいけない」という強い禁止は、Don't + 動詞の原形 で表すことができます。` }));
-    addQ(2, "応用", "誤文訂正", () => ({ text:`誤りの部分に下線を引いて、正しい表現を書きなさい。\nHow do you think of our new teacher?`, answer:`How -> What`, explanation:`「〜をどう思いますか」と尋ねる場合は、How ではなく What do you think of(about) ~? を使います。` }));
-    addQ(2, "応用", "誤文訂正", () => { const c=rCity(); return { text:`誤りの部分に下線を引いて、正しい表現を書きなさい。\nWhere is the capital of ${c}?`, answer:`Where -> What`, explanation:`「〜の首都はどこ(何)か」と尋ねる場合は、場所ではなく名前・事物を聞くため What を使います。` }; });
+    // --- 第2章 文の種類 ---
+    addQ(2, "基礎", "否定文の作成", () => { 
+        const n=rName(), c=rCity(), t=rPast(); 
+        return r([
+          { text:`否定文に書きかえなさい。\n${n} is from ${c}.`, answer:`${n} is not [isn't] from ${c}.`, explanation:`be動詞の否定文は、be動詞の直後に not を置きます。` },
+          { text:`否定文に書きかえなさい。\n${n} lives in this town.`, answer:`${n} does not [doesn't] live in this town.`, explanation:`一般動詞の現在形(3人称単数)の否定文は、does not (doesn't) + 動詞の原形 にします。` },
+          { text:`否定文に書きかえなさい。\n${n} played tennis ${t}.`, answer:`${n} did not [didn't] play tennis ${t}.`, explanation:`一般動詞の過去形の否定文は did not (didn't) + 原形 にします。` }
+        ]);
+    });
+    addQ(2, "基礎", "疑問文の作成", () => { 
+        const n=rName(), c=rCity(); 
+        return r([
+          { text:`疑問文に書きかえなさい。\n${n} went to ${c}.`, answer:`Did ${n} go to ${c}?`, explanation:`一般動詞の過去形の疑問文は文頭に Did を置き、動詞は原形に戻します。` },
+          { text:`疑問文に書きかえなさい。\nThey are busy now.`, answer:`Are they busy now?`, explanation:`be動詞の文は、be動詞を文頭に出して疑問文を作ります。` }
+        ]);
+    });
+    addQ(2, "標準", "付加疑問文", () => { 
+        const nM=rNameM(), nF=rNameF();
+        return r([
+          { text:`（　）に適する語を入れて付加疑問文を完成しなさい。\n${nM} isn't a student, (   ) (   )?`, answer:`is he`, explanation:`前の文が否定文なので、後ろは肯定の付加疑問(is he)をつけます。` },
+          { text:`（　）に適する語を入れて付加疑問文を完成しなさい。\n${nF} likes music, (   ) (   )?`, answer:`doesn't she`, explanation:`前が肯定の一般動詞なので、後ろは否定の付加疑問(doesn't she)をつけます。` },
+          { text:`（　）に適する語を入れて付加疑問文を完成しなさい。\nYou are tired, (   ) (   )?`, answer:`aren't you`, explanation:`前が肯定のbe動詞なので、後ろは否定の付加疑問(aren't you)をつけます。` }
+        ]);
+    });
+    addQ(2, "標準", "感嘆文", () => {
+        const n=rName(), adj=rAdj();
+        return r([
+          { text:`（　）に適する語を入れて感嘆文を完成しなさい。\n(   ) beautiful this flower is!`, answer:`How`, explanation:`How + 形容詞/副詞 + (S + V)! の語順で「なんて〜なんでしょう」という感嘆文を作ります。` },
+          { text:`（　）に適する語を入れて感嘆文を完成しなさい。\n(   ) a big dog ${n} has!`, answer:`What`, explanation:`What + (a/an) + 形容詞 + 名詞 + (S + V)! の語順で名詞を強調する感嘆文を作ります。` }
+        ]);
+    });
+    addQ(2, "応用", "命令文の書き換え", () => ({ 
+        text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nYou mustn't eat between meals.\n= (   ) eat between meals.`, answer:`Don't`, explanation:`「〜してはいけない」という強い禁止は、Don't + 動詞の原形 で表すことができます。` 
+    }));
+    addQ(2, "応用", "疑問詞の選択", () => { 
+        const c=rCity(); 
+        return r([
+          { text:`誤りの部分に下線を引いて、正しい表現を書きなさい。\nHow do you think of our new teacher?`, answer:`How -> What`, explanation:`「〜をどう思いますか」と尋ねる場合は、How ではなく What do you think of(about) ~? を使います。` },
+          { text:`誤りの部分に下線を引いて、正しい表現を書きなさい。\nWhere is the capital of ${c}?`, answer:`Where -> What`, explanation:`「〜の首都はどこ(何)か」と尋ねる場合は、場所ではなく名前・事物を聞くため What を使います。` }
+        ]);
+    });
 
-    // 第3章 基本時制
-    addQ(3, "基礎", "未来形", () => ({ text:`will を使って未来の文に書きかえなさい。\nIt rains.`, answer:`It will rain.`, explanation:`will + 動詞の原形 で未来の事柄(〜だろう)を表します。` }));
-    addQ(3, "基礎", "時制の書き換え", () => { const n=rName(); return { text:`（　）内の指示に従って書きかえなさい。\n${n} uses this computer. （否定文に）`, answer:`${n} does not [doesn't] use this computer.`, explanation:`主語が3人称単数なので doesn't を使い、動詞は原形に戻します。` }; });
-    addQ(3, "基礎", "時制の書き換え", () => ({ text:`（　）内の動詞を適する形になおしなさい。\nI ( be ) not at home last night.`, answer:`was`, explanation:`last night(昨夜)から過去のことだとわかるため、主語 I に合わせて was にします。` }));
-    addQ(3, "基礎", "進行形", () => { const n=rName(); return { text:`（　）内の動詞を適する形になおしなさい。\n${n} ( play ) tennis now.`, answer:`is playing`, explanation:`nowがあるため、現在進行形(is ~ing)にします。` }; });
-    addQ(3, "標準", "進行形", () => ({ text:`進行形の文になおしなさい。\nThe dog lies under the table.`, answer:`The dog is lying under the table.`, explanation:`be動詞 + ~ing で進行形を作ります。lie の ~ing 形は lying となります。` }));
-    addQ(3, "標準", "助動詞", () => ({ text:`日本語を参考にして、（　）に will または shall を入れなさい。\n(   ) we climb the mountain next month? （〜しましょうか）`, answer:`Shall`, explanation:`Shall we ~? で「一緒に〜しましょうか」と提案する表現になります。` }));
-    addQ(3, "標準", "時制の一致", () => { const n=rName(); return { text:`下線部の動詞を過去形にして、文全体を書きかえなさい。\nI think that ${n} can speak English.`, answer:`I thought that ${n} could speak English.`, explanation:`主節の動詞(think)が過去形(thought)になったので、従属節の can も過去形(could)に一致させます。` }; });
-    addQ(3, "標準", "未来形", () => ({ text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nLet's go on a hike next Sunday.\n= (   )(   ) go on a hike next Sunday?`, answer:`Shall we`, explanation:`Let's ~ は Shall we ~? で書き換えることができます。` }));
-    addQ(3, "応用", "並べかえ", () => { const n=rName(); return { text:`（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n( arriving / is / seven / ${n} / at ) this evening.`, answer:`${n} is arriving at seven this evening.`, explanation:`be動詞 + ~ing の進行形で「（近い未来に）〜する予定だ」という確定的な未来を表すことができます。` }; });
-    addQ(3, "応用", "英訳", () => ({ text:`次の日本文を英文になおしなさい。\n私たちは雨がやんだら、出発するつもりです。`, answer:`We will start when it stops raining.`, explanation:`時や条件を表す副詞節(when 〜)の中では、未来のことでも現在形(stops)で表すという重要なルールがあります。` }));
-    addQ(3, "応用", "未来進行形", () => ({ text:`次の英文を日本語になおしなさい。\nWe will be enjoying the concert at seven this evening.`, answer:`私たちは今日の夕方7時にはコンサートを楽しんでいるだろう。`, explanation:`will be ~ing で「（未来の特定の時点で）〜しているところだろう」という未来進行形を表します。` }));
+    // --- 第3章 基本時制 ---
+    addQ(3, "基礎", "未来形の文", () => {
+        const n=rName(), t=rFut();
+        return r([
+          { text:`will を使って未来の文に書きかえなさい。\nIt rains.`, answer:`It will rain.`, explanation:`will + 動詞の原形 で未来の事柄(〜だろう)を表します。` },
+          { text:`will を使って未来の文に書きかえなさい。\n${n} plays tennis.`, answer:`${n} will play tennis.`, explanation:`will の後ろは動詞の原形(play)になります。` }
+        ]);
+    });
+    addQ(3, "基礎", "過去・現在進行", () => {
+        const n=rName(), t=rPast();
+        return r([
+          { text:`（　）内の動詞を適する形になおしなさい。\nI ( be ) not at home ${t}.`, answer:`was`, explanation:`過去を表す語句(${t})があるため、主語 I に合わせて was にします。` },
+          { text:`（　）内の動詞を適する形になおしなさい。\n${n} ( study ) English now.`, answer:`is studying`, explanation:`nowがあるため、現在進行形(is ~ing)にします。` }
+        ]);
+    });
+    addQ(3, "標準", "進行形への書き換え", () => {
+        const n=rName();
+        return r([
+          { text:`進行形の文になおしなさい。\nThe dog lies under the table.`, answer:`The dog is lying under the table.`, explanation:`be動詞 + ~ing で進行形を作ります。lie の ~ing 形は lying となります。` },
+          { text:`進行形の文になおしなさい。\n${n} runs in the park.`, answer:`${n} is running in the park.`, explanation:`run のように短母音+子音字で終わる語は、子音字を重ねて nning にします。` }
+        ]);
+    });
+    addQ(3, "標準", "助動詞(提案・勧誘)", () => {
+        const n=rName(), t=rFut();
+        return r([
+          { text:`日本語を参考にして、（　）に will または shall を入れなさい。\n(   ) we climb the mountain ${t}? （〜しましょうか）`, answer:`Shall`, explanation:`Shall we ~? で「一緒に〜しましょうか」と提案する表現になります。` },
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nLet's go on a hike ${t}.\n= (   )(   ) go on a hike ${t}?`, answer:`Shall we`, explanation:`Let's ~ は Shall we ~? で書き換えることができます。` }
+        ]);
+    });
+    addQ(3, "応用", "進行形の未来表現", () => { 
+        const n=rName(), t=rFut(); 
+        return { text:`（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n( arriving / is / seven / ${n} / at ) ${t}.`, answer:`${n} is arriving at seven ${t}.`, explanation:`be動詞 + ~ing の進行形で「（近い未来に）〜する予定だ」という確定的な未来を表すことができます。` }; 
+    });
+    addQ(3, "応用", "時と条件の副詞節", () => {
+        return r([
+          { text:`次の日本文を英文になおしなさい。\n私たちは雨がやんだら、出発するつもりです。`, answer:`We will start when it stops raining.`, explanation:`時や条件を表す副詞節(when 〜)の中では、未来のことでも現在形(stops)で表すという重要なルールがあります。` },
+          { text:`（　）内の動詞を適する形になおしなさい。\nIf it ( rain ) tomorrow, we will not go on a picnic.`, answer:`rains`, explanation:`If が導く条件の副詞節の中では、未来のこと(tomorrow)でも現在形を使います。` }
+        ]);
+    });
 
-    // 第4章 完了形
-    addQ(4, "基礎", "完了形", () => { const t=rPast(); return { text:`（　）内の語句を加えて現在完了の文にしなさい。\nIt is cold. ( since ${t} )`, answer:`It has been cold since ${t}.`, explanation:`have(has) + 過去分詞 で「ずっと〜している」という継続を表します。sinceは「〜以来」です。` }; });
-    addQ(4, "基礎", "完了形", () => { const c=rCity(); return { text:`（　）に適する語を下から選んで入れなさい。\nShe has (   ) been to ${c}. （行ったことは一度もない）\n[ ever, never, for, yet, already, just, since ]`, answer:`never`, explanation:`have(has) never + 過去分詞 で「一度も〜したことがない」という経験の否定を表します。` }; });
-    addQ(4, "基礎", "完了形の否定文", () => ({ text:`（　）内の語句を加えて現在完了の文にしなさい。\nI have met her before. （否定文に）`, answer:`I have not [haven't] met her before.`, explanation:`現在完了形の否定文は have(has) の直後に not を置きます。` }));
-    addQ(4, "基礎", "完了形(just)", () => ({ text:`（　）に適する語を選んで入れなさい。\nJim has (   ) read the book. （ちょうど読んだところだ）\n[ ever, never, for, yet, already, just, since ]`, answer:`just`, explanation:`「ちょうど〜したところ」は just を用いて完了を表します。` }));
-    addQ(4, "標準", "完了形", () => { const n=rName(); return { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私は先月以来ずっと${n}を見かけていません。\nI (   )(   ) ${n} (   ) last month.`, answer:`have not seen [haven't seen] / since`, explanation:`「〜以来」は since を使い、「見かけていない」は現在完了の否定形で表します。` }; });
-    addQ(4, "標準", "完了進行形", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n昨日から雨が降ったりやんだりしています。\nIt (   )(   )(   ) on and off since yesterday.`, answer:`has been raining`, explanation:`have(has) been + ~ing で「（今まで）ずっと〜し続けている」という動作の継続を表します。` }));
-    addQ(4, "標準", "過去完了", () => ({ text:`日本文になおしなさい。\nThe train had already left when I arrived at the station.`, answer:`私が駅に着いたとき、列車はすでに発車していた。`, explanation:`過去のある時点(arrived)よりも前に完了していたことを過去完了(had+p.p.)で表します。` }));
-    addQ(4, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように並べかえなさい。１語不要な語があります。\n私はこれほどすばらしい映画を今まで見たことがありません。\n( I / never / have / such / movie / seen / fantastic / a / . )`, answer:`I have never seen such a fantastic movie.`, explanation:`I have never seen such a ~ で「これまでにこんな〜を見たことがない」という現在完了の経験を表す表現です。` }));
-    addQ(4, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように並べかえなさい。１語不要な語があります。\n彼女たちは１時間以上おしゃべりをしています。\n( talking / for / than / an hour / they / been / more / have / . )`, answer:`They have been talking for more than an hour.`, explanation:`They have been talking (完了進行形) + for more than an hour (1時間以上) という構成になります。` }));
-    addQ(4, "応用", "英訳", () => ({ text:`次の日本文を英文になおしなさい。\n昨日図書館から借りてきた本を、私はちょうど読み終えたところです。`, answer:`I have just finished reading the book I borrowed from the library yesterday.`, explanation:`have just finished ~ing (ちょうど〜し終えたところだ)を用います。` }));
-    addQ(4, "応用", "誤文訂正", () => ({ text:`誤りの部分に下線を引いて、正しい表現を書きなさい。\nWhen have you written the letter?`, answer:`When have you written -> When did you write`, explanation:`When は明確な過去の時点を尋ねるため、現在(今まで)の幅を持つ現在完了とは一緒に使えません。過去形を使います。` }));
+    // --- 第4章 完了形 ---
+    addQ(4, "基礎", "現在完了(継続・経験)", () => { 
+        const t=rPast(), c=rCity(); 
+        return r([
+          { text:`（　）内の語句を加えて現在完了の文にしなさい。\nIt is cold. ( since ${t} )`, answer:`It has been cold since ${t}.`, explanation:`have(has) + 過去分詞 で「ずっと〜している」という継続を表します。sinceは「〜以来」です。` },
+          { text:`（　）に適する語を下から選んで入れなさい。\nShe has (   ) been to ${c}. （行ったことは一度もない）\n[ ever, never, for, yet, already, just, since ]`, answer:`never`, explanation:`have(has) never + 過去分詞 で「一度も〜したことがない」という経験の否定を表します。` }
+        ]);
+    });
+    addQ(4, "基礎", "現在完了(完了・結果)", () => { 
+        const n=rName();
+        return r([
+          { text:`（　）内の語句を加えて現在完了の文にしなさい。\nI have met her before. （否定文に）`, answer:`I have not [haven't] met her before.`, explanation:`現在完了形の否定文は have(has) の直後に not を置きます。` },
+          { text:`（　）に適する語を選んで入れなさい。\n${n} has (   ) read the book. （ちょうど読んだところだ）\n[ ever, never, for, yet, already, just, since ]`, answer:`just`, explanation:`「ちょうど〜したところ」は just を用いて完了を表します。` }
+        ]);
+    });
+    addQ(4, "標準", "現在完了(英作)", () => { 
+        const n=rName(); 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私は先月以来ずっと${n}を見かけていません。\nI (   )(   ) ${n} (   ) last month.`, answer:`have not seen [haven't seen] / since`, explanation:`「〜以来」は since を使い、「見かけていない」は現在完了の否定形で表します。` },
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n昨日から雨が降ったりやんだりしています。\nIt (   )(   )(   ) on and off since yesterday.`, answer:`has been raining`, explanation:`have(has) been + ~ing で「（今まで）ずっと〜し続けている」という動作の継続(完了進行形)を表します。` }
+        ]);
+    });
+    addQ(4, "標準", "過去完了", () => ({ 
+        text:`日本文になおしなさい。\nThe train had already left when I arrived at the station.`, answer:`私が駅に着いたとき、列車はすでに発車していた。`, explanation:`過去のある時点(arrived)よりも前に完了していたことを過去完了(had+p.p.)で表します。` 
+    }));
+    addQ(4, "応用", "現在完了の並べかえ", () => {
+        return r([
+          { text:`日本文の意味を表す英文になるように並べかえなさい。１語不要な語があります。\n私はこれほどすばらしい映画を今まで見たことがありません。\n( I / never / have / such / movie / seen / fantastic / a / . )`, answer:`I have never seen such a fantastic movie.`, explanation:`I have never seen such a ~ で「これまでにこんな〜を見たことがない」という現在完了の経験を表す表現です。` },
+          { text:`日本文の意味を表す英文になるように並べかえなさい。１語不要な語があります。\n彼女たちは１時間以上おしゃべりをしています。\n( talking / for / than / an hour / they / been / more / have / . )`, answer:`They have been talking for more than an hour.`, explanation:`They have been talking (完了進行形) + for more than an hour (1時間以上) という構成になります。` }
+        ]);
+    });
+    addQ(4, "応用", "現在完了の誤文訂正", () => ({ 
+        text:`誤りの部分に下線を引いて、正しい表現を書きなさい。\nWhen have you written the letter?`, answer:`When have you written -> When did you write`, explanation:`When は明確な過去の時点を尋ねるため、現在(今まで)の幅を持つ現在完了とは一緒に使えません。過去形を使います。` 
+    }));
 
-    // 第5章 助動詞
-    addQ(5, "基礎", "助動詞", () => ({ text:`（　）内から最も適する語を選びなさい。\nMy sister can ( play / plays / playing ) the piano very well.`, answer:`play`, explanation:`助動詞(canなど)の後ろは必ず動詞の原形がきます。主語が3人称単数でも s はつきません。` }));
-    addQ(5, "基礎", "助動詞", () => { const n=rName(); return { text:`（　）内から最も適する語を選びなさい。\n${n} ( may / can / must ) wash your hands before dinner.`, answer:`must`, explanation:`「食事の前に手を洗わなければならない」という義務や強い必要性を表す must が文脈上適切です。` }; });
-    addQ(5, "基礎", "助動詞(許可)", () => ({ text:`（　）内から最も適する語を選びなさい。\n( May / Must / Should ) I use your dictionary?`, answer:`May`, explanation:`May I ~? で「〜してもよいですか(許可)」を表します。Can I ~? も使えます。` }));
-    addQ(5, "標準", "書き換え", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt is not necessary for you to come here tomorrow.\nYou (   )(   ) come here tomorrow.`, answer:`don't have to`, explanation:`don't have to ~ で「〜する必要はない(不必要)」という意味になり、It is not necessary to ~ と同じ意味を表せます。` }));
-    addQ(5, "標準", "助動詞", () => ({ text:`（　）に would または should を入れなさい。\nHe promised he (   ) finish the work by Friday.`, answer:`would`, explanation:`主節が過去形(promised)なので、従属節の未来形(will)も時制の一致を受けて would になります。` }));
-    addQ(5, "標準", "書き換え", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nHe will be able to pass the exam.\n= He (   ) pass the exam.`, answer:`can`, explanation:`be able to (〜できる) は助動詞 can とほぼ同じ意味を表します。` }));
-    addQ(5, "応用", "並べかえ", () => ({ text:`（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n遅れたのは君の責任だ。( better / go / not / had / out / you ) now.`, answer:`You had better not go out now.`, explanation:`had better + 原形 で「〜した方がよい」。その否定形は had better not + 原形 となります。` }));
-    addQ(5, "応用", "助動詞＋完了形", () => { const n=rName(); return { text:`日本語を参考にして、（　）に適する語を入れなさい。\n${n} (   )(   )(   ) such a thing. （そんなことをすべきでなかったのに）`, answer:`should not have done [ought not to have done]`, explanation:`should not have + 過去分詞 で「〜すべきではなかったのに（してしまった）」という過去の行為への後悔・非難を表します。` }; });
-    addQ(5, "応用", "助動詞＋完了形", () => ({ text:`意味の違いに注意して日本文になおしなさい。\nHe must be rich. / He must have been rich.`, answer:`彼は金持ちにちがいない。 / 彼は金持ちだったにちがいない。`, explanation:`must be (現在に対する強い推量) と must have p.p. (過去に対する強い推量) の違いです。` }));
-    addQ(5, "応用", "助動詞＋完了形", () => ({ text:`意味の違いに注意して日本文になおしなさい。\nShe cannot have said such a stupid thing.`, answer:`彼女がそんなばかなことを言ったはずがない。`, explanation:`cannot have p.p. で「(過去に)〜したはずがない」という強い否定の推量を表します。` }));
+    // --- 第5章 助動詞 ---
+    addQ(5, "基礎", "助動詞の後ろ", () => { 
+        const n=rName(), s=rSport();
+        return r([
+          { text:`（　）内から最も適する語を選びなさい。\nMy sister can ( play / plays / playing ) the piano very well.`, answer:`play`, explanation:`助動詞(canなど)の後ろは必ず動詞の原形がきます。主語が3人称単数でも s はつきません。` },
+          { text:`（　）内から最も適する語を選びなさい。\n${n} ( may / can / must ) wash your hands before dinner.`, answer:`must`, explanation:`「食事の前に手を洗わなければならない」という義務や強い必要性を表す must が文脈上適切です。` },
+          { text:`（　）内から最も適する語を選びなさい。\n( May / Must / Should ) I use your dictionary?`, answer:`May`, explanation:`May I ~? で「〜してもよいですか(許可)」を表します。Can I ~? も使えます。` }
+        ]);
+    });
+    addQ(5, "標準", "助動詞の書き換え", () => { 
+        return r([
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt is not necessary for you to come here tomorrow.\nYou (   )(   ) come here tomorrow.`, answer:`don't have to`, explanation:`don't have to ~ で「〜する必要はない(不必要)」という意味になり、It is not necessary to ~ と同じ意味を表せます。` },
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nHe will be able to pass the exam.\n= He (   ) pass the exam.`, answer:`can`, explanation:`be able to (〜できる) は助動詞 can とほぼ同じ意味を表します。未来形(will)の後ろにcanは置けないためwill be able toになりますが、現在の意味ならcan一語でOKです。` }
+        ]);
+    });
+    addQ(5, "標準", "時制の一致と助動詞", () => ({ 
+        text:`（　）に would または should を入れなさい。\nHe promised he (   ) finish the work by Friday.`, answer:`would`, explanation:`主節が過去形(promised)なので、従属節の未来形(will)も時制の一致を受けて would になります。` 
+    }));
+    addQ(5, "応用", "助動詞の慣用表現", () => ({ 
+        text:`（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n遅れたのは君の責任だ。( better / go / not / had / out / you ) now.`, answer:`You had better not go out now.`, explanation:`had better + 原形 で「〜した方がよい」。その否定形は had better not + 原形 となります。` 
+    }));
+    addQ(5, "応用", "助動詞＋完了形", () => { 
+        const n=rName(); 
+        return r([
+          { text:`日本語を参考にして、（　）に適する語を入れなさい。\n${n} (   )(   )(   ) such a thing. （そんなことをすべきでなかったのに）`, answer:`should not have done [ought not to have done]`, explanation:`should not have + 過去分詞 で「〜すべきではなかったのに（してしまった）」という過去の行為への後悔・非難を表します。` },
+          { text:`意味の違いに注意して日本文になおしなさい。\nHe must be rich. / He must have been rich.`, answer:`彼は金持ちにちがいない。 / 彼は金持ちだったにちがいない。`, explanation:`must be (現在に対する強い推量) と must have p.p. (過去に対する強い推量) の違いです。` },
+          { text:`意味の違いに注意して日本文になおしなさい。\nShe cannot have said such a stupid thing.`, answer:`彼女がそんなばかなことを言ったはずがない。`, explanation:`cannot have p.p. で「(過去に)〜したはずがない」という強い否定の推量を表します。` }
+        ]);
+    });
 
-    // 第6章 受動態
-    addQ(6, "基礎", "受動態", () => { const n=rName(), i=rItem(); return { text:`受動態の文に書きかえなさい。\n${n} uses this ${i.split(' ')[1]}.`, answer:`This ${i.split(' ')[1]} is used by ${n}.`, explanation:`受動態は <be動詞 + 過去分詞 (+ by ~)> の形で作ります。元の文の目的語が主語になります。` }; });
-    addQ(6, "基礎", "受動態(過去)", () => ({ text:`受動態の文に書きかえなさい。\nThey built this house about one hundred years ago.`, answer:`This house was built about one hundred years ago.`, explanation:`元の文が過去形(built)なので、受動態も <was/were + 過去分詞> の過去形にします。` }));
-    addQ(6, "基礎", "受動態(未来)", () => ({ text:`受動態の文に書きかえなさい。\nWe will hold the party next Friday.`, answer:`The party will be held next Friday.`, explanation:`未来形の受動態は <will be + 過去分詞> となります。` }));
-    addQ(6, "標準", "前置詞", () => ({ text:`（　）に適する語を下から選んで入れなさい。\nThis desk is made (   ) wood. [ from, of, with, to ]`, answer:`of`, explanation:`材料の原型をとどめている「〜でできている」は be made of を使います。形や性質が変わる場合は from です。` }));
-    addQ(6, "標準", "群動詞の受動態", () => ({ text:`受動態の文に書きかえなさい。\nMany people listened to his speech.`, answer:`His speech was listened to by many people.`, explanation:`listen to のように2語以上で1つの動詞の働きをするものは、切り離さず1つのまとまりとして受動態にします。` }));
-    addQ(6, "標準", "前置詞", () => ({ text:`（　）に適する語を入れなさい。\nWe were caught (   ) a shower on the way. (にわか雨にあった)`, answer:`in`, explanation:`be caught in a shower で「にわか雨にあう」という慣用表現です。` }));
-    addQ(6, "応用", "書き換え", () => ({ text:`（　）内の指示に従って書きかえなさい。\nHe told them to do the work. （SVO+to不定詞の受動態に）`, answer:`They were told to do the work by him.`, explanation:`目的語(them)を主語(They)にし、動詞を受動態(were told)にしたあと、残りの to 不定詞をそのまま続けます。` }));
-    addQ(6, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nその山の頂上は1年中雪で覆われています。\nThe top of the mountain is ( snow / all / year / covered / round / with / . )`, answer:`The top of the mountain is covered with snow all year round.`, explanation:`be covered with ~ で「〜で覆われている」という、by 以外の前置詞を使う受動態の慣用表現です。` }));
-    addQ(6, "応用", "書き換え(第4文型)", () => { const n=rName(); return { text:`2通りの受動態にしなさい。\n${n} showed us some pictures.`, answer:`We were shown some pictures by ${n}. / Some pictures were shown to us by ${n}.`, explanation:`SVOO(第4文型)の文は目的語が2つあるので、それぞれを主語にした2通りの受動態が作れます。` }; });
-    addQ(6, "応用", "英訳", () => ({ text:`英文になおしなさい。\nその男の子は車にひかれました(run over)。`, answer:`The boy was run over by a car.`, explanation:`群動詞(run over)の受動態は、run(過去分詞) + over のあとに by a car を続けます。前置詞が並ぶことになりますが問題ありません。` }));
+    // --- 第6章 受動態 ---
+    addQ(6, "基礎", "受動態の基本", () => { 
+        const n=rName(), i=rItem(); 
+        return r([
+          { text:`受動態の文に書きかえなさい。\n${n} uses this ${i.split(' ')[1]}.`, answer:`This ${i.split(' ')[1]} is used by ${n}.`, explanation:`受動態は <be動詞 + 過去分詞 (+ by ~)> の形で作ります。元の文の目的語が主語になります。` },
+          { text:`受動態の文に書きかえなさい。\nThey built this house about one hundred years ago.`, answer:`This house was built about one hundred years ago.`, explanation:`元の文が過去形(built)なので、受動態も <was/were + 過去分詞> の過去形にします。` },
+          { text:`受動態の文に書きかえなさい。\nWe will hold the party next Friday.`, answer:`The party will be held next Friday.`, explanation:`未来形の受動態は <will be + 過去分詞> となります。` }
+        ]);
+    });
+    addQ(6, "標準", "前置詞を伴う受動態", () => { 
+        return r([
+          { text:`（　）に適する語を下から選んで入れなさい。\nThis desk is made (   ) wood. [ from, of, with, to ]`, answer:`of`, explanation:`材料の原型をとどめている「〜でできている」は be made of を使います。形や性質が変わる場合は from です。` },
+          { text:`（　）に適する語を入れなさい。\nWe were caught (   ) a shower on the way. (にわか雨にあった)`, answer:`in`, explanation:`be caught in a shower で「にわか雨にあう」という慣用表現です。` }
+        ]);
+    });
+    addQ(6, "標準", "群動詞の受動態", () => ({ 
+        text:`受動態の文に書きかえなさい。\nMany people listened to his speech.`, answer:`His speech was listened to by many people.`, explanation:`listen to のように2語以上で1つの動詞の働きをするものは、切り離さず1つのまとまりとして受動態にします。` 
+    }));
+    addQ(6, "応用", "SVOO/SVOCの受動態", () => { 
+        const n=rName(); 
+        return r([
+          { text:`（　）内の指示に従って書きかえなさい。\nHe told them to do the work. （SVO+to不定詞の受動態に）`, answer:`They were told to do the work by him.`, explanation:`目的語(them)を主語(They)にし、動詞を受動態(were told)にしたあと、残りの to 不定詞をそのまま続けます。` },
+          { text:`2通りの受動態にしなさい。\n${n} showed us some pictures.`, answer:`We were shown some pictures by ${n}. / Some pictures were shown to us by ${n}.`, explanation:`SVOO(第4文型)の文は目的語が2つあるので、それぞれを主語にした2通りの受動態が作れます。` }
+        ]);
+    });
+    addQ(6, "応用", "慣用表現・前置詞", () => {
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nその山の頂上は1年中雪で覆われています。\nThe top of the mountain is ( snow / all / year / covered / round / with / . )`, answer:`The top of the mountain is covered with snow all year round.`, explanation:`be covered with ~ で「〜で覆われている」という、by 以外の前置詞を使う受動態の慣用表現です。` },
+          { text:`英文になおしなさい。\nその男の子は車にひかれました(run over)。`, answer:`The boy was run over by a car.`, explanation:`群動詞(run over)の受動態は、run(過去分詞) + over のあとに by a car を続けます。前置詞が並ぶことになりますが問題ありません。` }
+        ]);
+    });
 
-    // 第7章 不定詞
-    addQ(7, "基礎", "和訳", () => { const t=rFut(); return { text:`次の英文を日本語になおしなさい。\nI want you to finish the work by ${t}.`, answer:`私はあなたに${t}までにその仕事を終わらせてほしい。`, explanation:`want + O + to不定詞 で「Oに〜してほしい」という意味になります。` }; });
-    addQ(7, "基礎", "不定詞", () => ({ text:`日本語を参考にして、（　）に適する語を入れなさい。\nI (   ) (   ) eat steak. （ステーキを食べたい）`, answer:`want to`, explanation:`want to + 動詞の原形 で「〜したい」という不定詞の名詞的用法になります。` }));
-    addQ(7, "基礎", "不定詞(形容詞的用法)", () => ({ text:`並べかえなさい。\n( cold / something / drink / to ). （何か冷たい飲み物）`, answer:`something cold to drink`, explanation:`something + 形容詞 + to不定詞 の語順になります。to不定詞は前の名詞(something)を修飾しています。` }));
-    addQ(7, "標準", "並べかえ", () => { const n=rName(); return { text:`（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n${n} ( do / things / to / a lot of / has ) today.`, answer:`${n} has a lot of things to do today.`, explanation:`a lot of things to do で「すべき多くのこと」となり、不定詞(to do)が前の名詞(things)を修飾する形容詞的用法です。` }; });
-    addQ(7, "標準", "書き換え(too...to)", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nThe car is so expensive that I can't buy it.\nThe car is (   ) expensive (   ) me (   ) buy.`, answer:`too / for / to`, explanation:`too ~ to ... で「あまりに〜すぎて…できない」という意味になります。動作の主体は for ~ で表します。` }));
-    addQ(7, "標準", "書き換え(enough)", () => ({ text:`（　）に適する語を入れなさい。\nHe was so kind that he carried my heavy bag.\nHe was kind (   ) (   ) carry my heavy bag.`, answer:`enough to`, explanation:`... enough to V (Vするほど十分に〜だ) の構文で書き換えられます。` }));
-    addQ(7, "応用", "形式主語", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n計画を立てるのは簡単だが、それを実行するのは難しい。\n(   ) is easy to make a plan, but difficult to carry it out.`, answer:`It`, explanation:`It is ~ to ... で「…することは〜だ」という構文。本当の主語(to make ~)を形式主語の It で置き換えています。` }));
-    addQ(7, "応用", "完了不定詞", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that he knows something about the accident.\nHe seems (   ) (   ) something about the accident.`, answer:`to know`, explanation:`It seems that S V は S seems to不定詞 に書き換えられます。時制が同じなので単純な to know となります。` }));
-    addQ(7, "応用", "完了不定詞(過去)", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that he failed in the business.\nHe seems (   )(   )(   ) in the business.`, answer:`to have failed`, explanation:`主節(seems:現在)より従属節(failed:過去)が昔のことなので、完了不定詞 to have p.p. にします。` }));
-    addQ(7, "応用", "独立不定詞", () => ({ text:`（　）に適する語を入れなさい。\n(   ) tell the truth, I didn't read the book. (実を言うと)`, answer:`To`, explanation:`To tell the truth (実を言うと) という、文全体を修飾する独立不定詞の慣用表現です。` }));
+    // --- 第7章 不定詞 ---
+    addQ(7, "基礎", "不定詞の名詞的用法", () => { 
+        const t=rFut(); 
+        return r([
+          { text:`次の英文を日本語になおしなさい。\nI want you to finish the work by ${t}.`, answer:`私はあなたに${t}までにその仕事を終わらせてほしい。`, explanation:`want + O + to不定詞 で「Oに〜してほしい」という意味になります。` },
+          { text:`日本語を参考にして、（　）に適する語を入れなさい。\nI (   ) (   ) eat steak. （ステーキを食べたい）`, answer:`want to`, explanation:`want to + 動詞の原形 で「〜したい」という不定詞の名詞的用法になります。` }
+        ]);
+    });
+    addQ(7, "基礎", "不定詞の形容詞的用法", () => ({ 
+        text:`並べかえなさい。\n( cold / something / drink / to ). （何か冷たい飲み物）`, answer:`something cold to drink`, explanation:`something + 形容詞 + to不定詞 の語順になります。to不定詞は前の名詞(something)を修飾しています。` 
+    }));
+    addQ(7, "標準", "不定詞の副詞的用法など", () => { 
+        const n=rName(); 
+        return r([
+          { text:`（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n${n} ( do / things / to / a lot of / has ) today.`, answer:`${n} has a lot of things to do today.`, explanation:`a lot of things to do で「すべき多くのこと」となり、不定詞(to do)が前の名詞(things)を修飾する形容詞的用法です。` },
+          { text:`（　）に適する語を入れなさい。\nHe was so kind that he carried my heavy bag.\nHe was kind (   ) (   ) carry my heavy bag.`, answer:`enough to`, explanation:`... enough to V (Vするほど十分に〜だ) の構文で書き換えられます。` }
+        ]);
+    });
+    addQ(7, "標準", "too...to", () => ({ 
+        text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nThe car is so expensive that I can't buy it.\nThe car is (   ) expensive (   ) me (   ) buy.`, answer:`too / for / to`, explanation:`too ~ to ... で「あまりに〜すぎて…できない」という意味になります。動作の主体は for ~ で表します。` 
+    }));
+    addQ(7, "応用", "形式主語・完了不定詞", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n計画を立てるのは簡単だが、それを実行するのは難しい。\n(   ) is easy to make a plan, but difficult to carry it out.`, answer:`It`, explanation:`It is ~ to ... で「…することは〜だ」という構文。本当の主語(to make ~)を形式主語の It で置き換えています。` },
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that he knows something about the accident.\nHe seems (   ) (   ) something about the accident.`, answer:`to know`, explanation:`It seems that S V は S seems to不定詞 に書き換えられます。時制が同じなので単純な to know となります。` },
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that he failed in the business.\nHe seems (   )(   )(   ) in the business.`, answer:`to have failed`, explanation:`主節(seems:現在)より従属節(failed:過去)が昔のことなので、完了不定詞 to have p.p. にします。` }
+        ]);
+    });
+    addQ(7, "応用", "独立不定詞", () => ({ 
+        text:`（　）に適する語を入れなさい。\n(   ) tell the truth, I didn't read the book. (実を言うと)`, answer:`To`, explanation:`To tell the truth (実を言うと) という、文全体を修飾する独立不定詞の慣用表現です。` 
+    }));
 
-    // 第8章 動名詞
-    addQ(8, "基礎", "動名詞", () => ({ text:`（　）内の語を適する形になおしなさい。\nHis hobby is ( watch ) stars.`, answer:`watching`, explanation:`be動詞の後ろに置かれ、補語として「〜すること」という意味を表す動名詞にします。` }));
-    addQ(8, "基礎", "動名詞(前置詞の後ろ)", () => ({ text:`（　）内の語を適する形になおしなさい。\nShe is good at ( play ) the flute.`, answer:`playing`, explanation:`at などの前置詞の後ろには、動詞の原形ではなく動名詞(~ing)を置く必要があります。` }));
-    addQ(8, "基礎", "動名詞(目的語)", () => ({ text:`（　）内の語を適する形になおしなさい。\nI have just finished ( read ) the book.`, answer:`reading`, explanation:`finish は目的語として不定詞ではなく動名詞(~ing)をとる代表的な動詞です。` }));
-    addQ(8, "標準", "書き換え", () => { const n=rName(); return { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nShe enjoyed playing tennis with ${n}.\nShe enjoyed (   ) with ${n}.`, answer:`playing tennis`, explanation:`enjoy は目的語に to不定詞ではなく動名詞(~ing)をとる動詞です。` }; });
-    addQ(8, "標準", "動名詞と不定詞の違い", () => ({ text:`英文の意味の違いに注意して、日本文になおしなさい。\n① She stopped looking at the stars.\n② She stopped to look at the stars.`, answer:`①彼女は星を見るのをやめた。\n②彼女は星を見るために立ち止まった。`, explanation:`stop ~ing は「〜するのをやめる」、stop to ~ は「〜するために立ち止まる」と意味が大きく異なります。` }));
-    addQ(8, "標準", "意味上の主語", () => ({ text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nI'm sure that he will win the game.\nI'm sure of (   ) (   ) the game.`, answer:`his[him] winning`, explanation:`主節の主語(I)と異なる場合、動名詞の前に意味上の主語として所有格(his)または目的格(him)を置きます。` }));
-    addQ(8, "応用", "慣用表現", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nこれ以上議論してもむだです。\nIt is (   )(   ) arguing any more.`, answer:`no use [good]`, explanation:`It is no use [good] ~ing で「〜してもむだである」という頻出の慣用表現です。` }));
-    addQ(8, "応用", "完了形動名詞", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nHe is proud that he has an expensive car.\nHe is proud (   )(   ) an expensive car.`, answer:`of having`, explanation:`be proud of ~ing で「〜したことを誇りに思う」。主節と時制が同じなので単純な ~ing にします。` }));
-    addQ(8, "応用", "完了形動名詞(過去)", () => ({ text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nHe is proud that he won the race.\nHe is proud of (   )(   ) the race.`, answer:`having won`, explanation:`過去のこと(won)を現在誇りに思っているので、完了形動名詞(having p.p.)にします。` }));
-    addQ(8, "応用", "慣用表現", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私はあなたにお会いできるのを楽しみにしています。\nI'm looking forward (   )(   ) you.`, answer:`to seeing`, explanation:`look forward to ~ing (〜するのを楽しみに待つ) の重要表現。この to は前置詞なので後ろは ~ing になります。` }));
+    // --- 第8章 動名詞 ---
+    addQ(8, "基礎", "動名詞の基本", () => { 
+        return r([
+          { text:`（　）内の語を適する形になおしなさい。\nHis hobby is ( watch ) stars.`, answer:`watching`, explanation:`be動詞の後ろに置かれ、補語として「〜すること」という意味を表す動名詞にします。` },
+          { text:`（　）内の語を適する形になおしなさい。\nShe is good at ( play ) the flute.`, answer:`playing`, explanation:`at などの前置詞の後ろには、動詞の原形ではなく動名詞(~ing)を置く必要があります。` },
+          { text:`（　）内の語を適する形になおしなさい。\nI have just finished ( read ) the book.`, answer:`reading`, explanation:`finish は目的語として不定詞ではなく動名詞(~ing)をとる代表的な動詞です。` }
+        ]);
+    });
+    addQ(8, "標準", "動名詞をとる動詞", () => { 
+        const n=rName(); 
+        return r([
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nShe enjoyed playing tennis with ${n}.\nShe enjoyed (   ) with ${n}.`, answer:`playing tennis`, explanation:`enjoy は目的語に to不定詞ではなく動名詞(~ing)をとる動詞です。` },
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nI'm sure that he will win the game.\nI'm sure of (   ) (   ) the game.`, answer:`his[him] winning`, explanation:`主節の主語(I)と異なる場合、動名詞の前に意味上の主語として所有格(his)または目的格(him)を置きます。` }
+        ]);
+    });
+    addQ(8, "標準", "動名詞と不定詞の違い", () => ({ 
+        text:`英文の意味の違いに注意して、日本文になおしなさい。\n① She stopped looking at the stars.\n② She stopped to look at the stars.`, answer:`①彼女は星を見るのをやめた。\n②彼女は星を見るために立ち止まった。`, explanation:`stop ~ing は「〜するのをやめる」、stop to ~ は「〜するために立ち止まる」と意味が大きく異なります。` 
+    }));
+    addQ(8, "応用", "動名詞の完了形", () => { 
+        return r([
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nHe is proud that he has an expensive car.\nHe is proud (   )(   ) an expensive car.`, answer:`of having`, explanation:`be proud of ~ing で「〜したことを誇りに思う」。主節と時制が同じなので単純な ~ing にします。` },
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nHe is proud that he won the race.\nHe is proud of (   )(   ) the race.`, answer:`having won`, explanation:`過去のこと(won)を現在誇りに思っているので、完了形動名詞(having p.p.)にします。` }
+        ]);
+    });
+    addQ(8, "応用", "動名詞の慣用表現", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nこれ以上議論してもむだです。\nIt is (   )(   ) arguing any more.`, answer:`no use [good]`, explanation:`It is no use [good] ~ing で「〜してもむだである」という頻出の慣用表現です。` },
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私はあなたにお会いできるのを楽しみにしています。\nI'm looking forward (   )(   ) you.`, answer:`to seeing`, explanation:`look forward to ~ing (〜するのを楽しみに待つ) の重要表現。この to は前置詞なので後ろは ~ing になります。` }
+        ]);
+    });
 
-    // 第9章 分詞
-    addQ(9, "基礎", "分詞", () => ({ text:`（　）内から適する語を選びなさい。\nLook at the baby ( sleeping / slept ) in the bed.`, answer:`sleeping`, explanation:`「眠っている赤ちゃん」と能動・進行の意味を表すので、現在分詞(sleeping)を使います。` }));
-    addQ(9, "基礎", "分詞", () => ({ text:`（　）内の語を適する形になおしなさい。\nThe girl ( sing ) on the stage is a famous TV personality.`, answer:`singing`, explanation:`分詞が他の語句(on the stage)を伴う場合は、名詞(The girl)を後ろから修飾します。能動なので現在分詞。` }));
-    addQ(9, "基礎", "分詞(受動)", () => ({ text:`（　）内の語を適する形になおしなさい。\nEnglish is a language ( use ) in many countries.`, answer:`used`, explanation:`「使われている言語」と受動の意味になるので過去分詞(used)を使います。` }));
-    addQ(9, "標準", "SVC", () => ({ text:`（　）内の語を適する形になおしなさい。\nHe sat ( read ) a book.`, answer:`reading`, explanation:`sit ~ing で「〜しながら座っている」という状態を表し、主語を説明する補語の働きをします。` }));
-    addQ(9, "標準", "SVOC", () => ({ text:`（　）内の語を適する分詞になおしなさい。\nI heard Jane ( sing ) a song in the music room.`, answer:`singing`, explanation:`hear + O + ~ing で「Oが〜しているのを聞く」という意味になり、OとCの間に能動の進行関係があります。` }));
-    addQ(9, "標準", "感情動詞の分詞", () => ({ text:`（　）内から適する語を選びなさい。\nThe movie was very ( exciting / excited ).`, answer:`exciting`, explanation:`物(映画)が主語の場合、感情を与える原因となるため現在分詞(~ing)を使います(人はexcitedになります)。` }));
-    addQ(9, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nこれはおじが私にくれたギターです。\nThis is ( given / me / by / to / the guitar ) my uncle.`, answer:`the guitar given to me by`, explanation:`「与えられたギター」なので、受動の意味をもつ過去分詞(given)を使って名詞を後ろから修飾します。` }));
-    addQ(9, "応用", "慣用表現", () => ({ text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n彼女はかばんを2階に運んでもらいました。\nShe had her bag ( carried / upstairs ).`, answer:`carried upstairs`, explanation:`have + O + 過去分詞 で「Oを〜してもらう」という使役・受動の意味になります(カバンは「運ばれる」側です)。` }));
-    addQ(9, "応用", "慣用表現", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\nおじは腕組みをして立っていた。\nMy uncle stood with his (   )(   ).`, answer:`arms folded`, explanation:`with O C (OをCした状態で) という付帯状況のwithです。腕は組まれる側なので過去分詞(folded)。` }));
-    addQ(9, "応用", "補語の分詞", () => ({ text:`並べかえなさい。\nその少女はバスを待ちながら立っていました。\n( for / waiting / the girl / stood ) the bus.`, answer:`The girl stood waiting for`, explanation:`stand ~ing (〜しながら立っている) というSVCの構文です。` }));
+    // --- 第9章 分詞 ---
+    addQ(9, "基礎", "現在分詞と過去分詞", () => { 
+        return r([
+          { text:`（　）内から適する語を選びなさい。\nLook at the baby ( sleeping / slept ) in the bed.`, answer:`sleeping`, explanation:`「眠っている赤ちゃん」と能動・進行の意味を表すので、現在分詞(sleeping)を使います。` },
+          { text:`（　）内の語を適する形になおしなさい。\nThe girl ( sing ) on the stage is a famous TV personality.`, answer:`singing`, explanation:`分詞が他の語句(on the stage)を伴う場合は、名詞(The girl)を後ろから修飾します。能動なので現在分詞。` },
+          { text:`（　）内の語を適する形になおしなさい。\nEnglish is a language ( use ) in many countries.`, answer:`used`, explanation:`「使われている言語」と受動の意味になるので過去分詞(used)を使います。` }
+        ]);
+    });
+    addQ(9, "標準", "補語としての分詞", () => { 
+        return r([
+          { text:`（　）内の語を適する形になおしなさい。\nHe sat ( read ) a book.`, answer:`reading`, explanation:`sit ~ing で「〜しながら座っている」という状態を表し、主語を説明する補語の働きをします。` },
+          { text:`（　）内の語を適する分詞になおしなさい。\nI heard Jane ( sing ) a song in the music room.`, answer:`singing`, explanation:`hear + O + ~ing で「Oが〜しているのを聞く」という意味になり、OとCの間に能動の進行関係があります。` }
+        ]);
+    });
+    addQ(9, "標準", "感情動詞の分詞", () => ({ 
+        text:`（　）内から適する語を選びなさい。\nThe movie was very ( exciting / excited ).`, answer:`exciting`, explanation:`物(映画)が主語の場合、感情を与える原因となるため現在分詞(~ing)を使います(人はexcitedになります)。` 
+    }));
+    addQ(9, "応用", "分詞の修飾・並べかえ", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nこれはおじが私にくれたギターです。\nThis is ( given / me / by / to / the guitar ) my uncle.`, answer:`the guitar given to me by`, explanation:`「与えられたギター」なので、受動の意味をもつ過去分詞(given)を使って名詞を後ろから修飾します。` },
+          { text:`並べかえなさい。\nその少女はバスを待ちながら立っていました。\n( for / waiting / the girl / stood ) the bus.`, answer:`The girl stood waiting for`, explanation:`stand ~ing (〜しながら立っている) というSVCの構文です。` }
+        ]);
+    });
+    addQ(9, "応用", "使役動詞やwithとの組み合わせ", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n彼女はかばんを2階に運んでもらいました。\nShe had her bag ( carried / upstairs ).`, answer:`carried upstairs`, explanation:`have + O + 過去分詞 で「Oを〜してもらう」という使役・受動の意味になります(カバンは「運ばれる」側です)。` },
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\nおじは腕組みをして立っていた。\nMy uncle stood with his (   )(   ).`, answer:`arms folded`, explanation:`with O C (OをCした状態で) という付帯状況のwithです。腕は組まれる側なので過去分詞(folded)。` }
+        ]);
+    });
 
-    // 第10章 使役動詞、知覚動詞
-    addQ(10, "基礎", "使役動詞", () => ({ text:`次の英文を日本文になおしなさい。\nThe teacher made the boys stand up.`, answer:`先生はその男の子たちを立たせた。`, explanation:`make + O + 動詞の原形 で「(強制的に)Oに〜させる」という意味になります。` }));
-    addQ(10, "基礎", "使役動詞", () => ({ text:`（　）内の語を適する形になおしなさい。\nI had Helen ( help ) me with my homework.`, answer:`help`, explanation:`have + O + 動詞の原形 で「(当然のこととして)Oに〜してもらう」という意味になります。to不定詞は使いません。` }));
-    addQ(10, "基礎", "使役動詞", () => ({ text:`（　）内の語を適する形になおしなさい。\nShe let her children ( play ) in the park.`, answer:`play`, explanation:`let + O + 原形 で「(許可して)Oに〜させてあげる」という意味になります。` }));
-    addQ(10, "標準", "知覚動詞", () => ({ text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n私は彼がそう言うのを聞きました。\nI ( him / say / heard ) so.`, answer:`heard him say`, explanation:`hear + O + 動詞の原形 で「Oが〜するのを聞く」という知覚動詞の構文です。` }));
-    addQ(10, "標準", "知覚動詞", () => ({ text:`（　）内の語句を並べかえて、意味の通る文を完成しなさい。\nI saw ( fall / the woman ) down.`, answer:`the woman fall`, explanation:`see + O + 動詞の原形 で「Oが〜するのを見る」という意味になります。` }));
-    addQ(10, "標準", "使役動詞の書き換え", () => ({ text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nMy parents forced me to marry the man.\nMy parents (   ) me (   ) the man.`, answer:`made / marry`, explanation:`force O to V は強制的ニュアンスがあるため、make O 原形 で書き換えられます。` }));
-    addQ(10, "応用", "並べかえ", () => ({ text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nあなたはサルがバナナを食べるのをじっと見ていたのですか。\nWere you ( a monkey / a banana / watching / eat )?`, answer:`watching a monkey eat a banana`, explanation:`watch + O + 動詞の原形 で「Oが〜するのをじっと見る(観察する)」という意味になります。` }));
-    addQ(10, "応用", "知覚動詞(原形/~ing)", () => ({ text:`意味の違いに注意して日本文になおしなさい。\nI heard him speak several languages at the party.\nI heard him speaking very good English at the party.`, answer:`私は彼がパーティーでいくつか言葉を話すのを聞いた。(一部始終)\n私は彼がパーティーでとても上手に英語を話しているのを聞いた。(進行中)`, explanation:`原形は「最初から最後まで」、~ingは「進行中の一部」というニュアンスの違いがあります。` }));
-    addQ(10, "応用", "使役動詞の受動態", () => ({ text:`受動態に書きかえなさい。\nHe made me wait for more than an hour.`, answer:`I was made to wait for more than an hour by him.`, explanation:`使役動詞(make)・知覚動詞の文を受動態にすると、原形不定詞は to不定詞 に復活します。` }));
-    addQ(10, "応用", "使役動詞(被害)", () => ({ text:`（　）内の語を適する分詞にかえて書きなさい。\nI had my watch ( steal ).`, answer:`stolen`, explanation:`「時計を盗まれた(被害)」なので過去分詞(p.p.)を使います。have O p.p. の構文です。` }));
+    // --- 第10章 使役動詞、知覚動詞 ---
+    addQ(10, "基礎", "使役動詞の基本", () => { 
+        return r([
+          { text:`次の英文を日本文になおしなさい。\nThe teacher made the boys stand up.`, answer:`先生はその男の子たちを立たせた。`, explanation:`make + O + 動詞の原形 で「(強制的に)Oに〜させる」という意味になります。` },
+          { text:`（　）内の語を適する形になおしなさい。\nI had Helen ( help ) me with my homework.`, answer:`help`, explanation:`have + O + 動詞の原形 で「(当然のこととして)Oに〜してもらう」という意味になります。to不定詞は使いません。` },
+          { text:`（　）内の語を適する形になおしなさい。\nShe let her children ( play ) in the park.`, answer:`play`, explanation:`let + O + 原形 で「(許可して)Oに〜させてあげる」という意味になります。` }
+        ]);
+    });
+    addQ(10, "標準", "知覚動詞の基本", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n私は彼がそう言うのを聞きました。\nI ( him / say / heard ) so.`, answer:`heard him say`, explanation:`hear + O + 動詞の原形 で「Oが〜するのを聞く」という知覚動詞の構文です。` },
+          { text:`（　）内の語句を並べかえて、意味の通る文を完成しなさい。\nI saw ( fall / the woman ) down.`, answer:`the woman fall`, explanation:`see + O + 動詞の原形 で「Oが〜するのを見る」という意味になります。` }
+        ]);
+    });
+    addQ(10, "標準", "書き換え", () => ({ 
+        text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nMy parents forced me to marry the man.\nMy parents (   ) me (   ) the man.`, answer:`made / marry`, explanation:`force O to V は強制的ニュアンスがあるため、make O 原形 で書き換えられます。` 
+    }));
+    addQ(10, "応用", "知覚動詞・使役動詞の応用", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nあなたはサルがバナナを食べるのをじっと見ていたのですか。\nWere you ( a monkey / a banana / watching / eat )?`, answer:`watching a monkey eat a banana`, explanation:`watch + O + 動詞の原形 で「Oが〜するのをじっと見る(観察する)」という意味になります。` },
+          { text:`（　）内の語を適する分詞にかえて書きなさい。\nI had my watch ( steal ).`, answer:`stolen`, explanation:`「時計を盗まれた(被害)」なので過去分詞(p.p.)を使います。have O p.p. の構文です。` }
+        ]);
+    });
+    addQ(10, "応用", "受動態・分詞との違い", () => { 
+        return r([
+          { text:`意味の違いに注意して日本文になおしなさい。\nI heard him speak several languages at the party.\nI heard him speaking very good English at the party.`, answer:`私は彼がパーティーでいくつか言葉を話すのを聞いた。(一部始終)\n私は彼がパーティーでとても上手に英語を話しているのを聞いた。(進行中)`, explanation:`原形は「最初から最後まで」、~ingは「進行中の一部」というニュアンスの違いがあります。` },
+          { text:`受動態に書きかえなさい。\nHe made me wait for more than an hour.`, answer:`I was made to wait for more than an hour by him.`, explanation:`使役動詞(make)・知覚動詞の文を受動態にすると、原形不定詞は to不定詞 に復活します。` }
+        ]);
+    });
 
-    // 第11章 分詞構文
-    addQ(11, "基礎", "分詞構文", () => ({ text:`分詞構文を使った文に書きかえなさい。\nWhen I entered the room, I found her sleeping.`, answer:`Entering the room, I found her sleeping.`, explanation:`接続詞(When)と主語(I)を省略し、動詞(entered)を現在分詞(Entering)の形にして繋ぎます。` }));
-    addQ(11, "基礎", "分詞構文", () => ({ text:`分詞構文を使った文に書きかえなさい。\nAs I had no money with me, I couldn't buy the book.`, answer:`Having no money with me, I couldn't buy the book.`, explanation:`理由を表す接続詞(As)と共通の主語を省き、had を Having に変えて分詞構文を作ります。` }));
-    addQ(11, "基礎", "分詞構文の意味", () => ({ text:`接続詞を使った文に書きかえなさい。\nTurning to the right, you'll find the building.`, answer:`If you turn to the right, you'll find the building.`, explanation:`「右に曲がれば」という条件(If)の文脈です。` }));
-    addQ(11, "標準", "完了形・否定形", () => ({ text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs she did not want to make him angry, she didn't say any more.\n(   )(   )(   ) make him angry, she didn't say any more.`, answer:`Not wanting to`, explanation:`分詞構文の否定形は、分詞(~ing)の直前に Not (または Never) を置きます。` }));
-    addQ(11, "標準", "完了形", () => ({ text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs he had lost all his money, he could not buy a ticket.\n(   )(   ) all his money, he could not buy a ticket.`, answer:`Having lost`, explanation:`主節の時制より前(大過去)のことなので完了形の分詞構文(Having p.p.)にします。` }));
-    addQ(11, "標準", "独立分詞構文", () => ({ text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs it was very hot, we went swimming.\n(   )(   ) very hot, we went swimming.`, answer:`It being`, explanation:`従属節の主語(it)が主節の主語(we)と異なる場合、分詞の前に主語を残す「独立分詞構文」になります。` }));
-    addQ(11, "応用", "独立分詞構文", () => ({ text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nIf the weather permits, we'll go on a hike to the lake.\n(   )(   ), we'll go on a hike to the lake.`, answer:`Weather permitting`, explanation:`主語が異なるので The weather を残した独立分詞構文です。` }));
-    addQ(11, "応用", "慣用表現", () => ({ text:`（　）から選びなさい。\n(   ) from his clothes, he must be a rich man.\n[ Judging / Generally speaking / Talking of / Considering ]`, answer:`Judging`, explanation:`Judging from ~ (〜から判断すると) という主語を省略した分詞構文の慣用表現です。` }));
-    addQ(11, "応用", "書き換え(受動)", () => ({ text:`分詞構文を使って書きかえなさい。\nAs I was spoken to by a stranger, I didn't know what to say.`, answer:`Spoken to by a stranger, I didn't know what to say.`, explanation:`Being spoken to... の Being が省略された形(過去分詞で始まる分詞構文)になります。` }));
+    // --- 第11章 分詞構文 ---
+    addQ(11, "基礎", "分詞構文への書き換え", () => { 
+        return r([
+          { text:`分詞構文を使った文に書きかえなさい。\nWhen I entered the room, I found her sleeping.`, answer:`Entering the room, I found her sleeping.`, explanation:`接続詞(When)と主語(I)を省略し、動詞(entered)を現在分詞(Entering)の形にして繋ぎます。` },
+          { text:`分詞構文を使った文に書きかえなさい。\nAs I had no money with me, I couldn't buy the book.`, answer:`Having no money with me, I couldn't buy the book.`, explanation:`理由を表す接続詞(As)と共通の主語を省き、had を Having に変えて分詞構文を作ります。` }
+        ]);
+    });
+    addQ(11, "基礎", "分詞構文の意味", () => ({ 
+        text:`接続詞を使った文に書きかえなさい。\nTurning to the right, you'll find the building.`, answer:`If you turn to the right, you'll find the building.`, explanation:`「右に曲がれば」という条件(If)の文脈です。` 
+    }));
+    addQ(11, "標準", "否定形・完了形", () => { 
+        return r([
+          { text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs she did not want to make him angry, she didn't say any more.\n(   )(   )(   ) make him angry, she didn't say any more.`, answer:`Not wanting to`, explanation:`分詞構文の否定形は、分詞(~ing)の直前に Not (または Never) を置きます。` },
+          { text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs he had lost all his money, he could not buy a ticket.\n(   )(   ) all his money, he could not buy a ticket.`, answer:`Having lost`, explanation:`主節の時制より前(大過去)のことなので完了形の分詞構文(Having p.p.)にします。` }
+        ]);
+    });
+    addQ(11, "標準", "独立分詞構文", () => ({ 
+        text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs it was very hot, we went swimming.\n(   )(   ) very hot, we went swimming.`, answer:`It being`, explanation:`従属節の主語(it)が主節の主語(we)と異なる場合、分詞の前に主語を残す「独立分詞構文」になります。` 
+    }));
+    addQ(11, "応用", "独立分詞構文の応用", () => { 
+        return r([
+          { text:`分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nIf the weather permits, we'll go on a hike to the lake.\n(   )(   ), we'll go on a hike to the lake.`, answer:`Weather permitting`, explanation:`主語が異なるので The weather を残した独立分詞構文です。` },
+          { text:`（　）から選びなさい。\n(   ) from his clothes, he must be a rich man.\n[ Judging / Generally speaking / Talking of / Considering ]`, answer:`Judging`, explanation:`Judging from ~ (〜から判断すると) という主語を省略した分詞構文の慣用表現です。` }
+        ]);
+    });
+    addQ(11, "応用", "過去分詞で始まる分詞構文", () => ({ 
+        text:`分詞構文を使って書きかえなさい。\nAs I was spoken to by a stranger, I didn't know what to say.`, answer:`Spoken to by a stranger, I didn't know what to say.`, explanation:`Being spoken to... の Being が省略された形(過去分詞で始まる分詞構文)になります。` 
+    }));
 
+    // --- 以降も同様に、出題バリエーションを確保する ---
+    // (コード量が増えすぎるのを防ぐため、各章の主要な問題を複数パターン用意してr()で回す構造にしています)
+    
     // 第12章 関係代名詞
-    addQ(12, "基礎", "関係代名詞", () => { const n=rName(); return { text:`（　）に who, whose, whom のいずれかを入れなさい。\nThe boy (   ) is playing soccer is ${n}.`, answer:`who`, explanation:`先行詞(The boy)が人で、関係詞節の中で主語の働きをしているので主格の who を使います。` }; });
-    addQ(12, "基礎", "関係代名詞", () => ({ text:`（　）に which, whose のいずれかを入れなさい。\nLook at the house (   ) roof is red.`, answer:`whose`, explanation:`「その家の屋根」という所有の関係(the roof of the house)を表すので、所有格の whose を使います。` }));
-    addQ(12, "基礎", "関係代名詞結合", () => ({ text:`2つの文を that 以外の関係代名詞を用いて1文にしなさい。\nI have an aunt. She lives in Kobe.`, answer:`I have an aunt who lives in Kobe.`, explanation:`先行詞が人で主格なので who を使って繋ぎます。` }));
-    addQ(12, "標準", "関係代名詞 what", () => ({ text:`（　）内から適する語を選びなさい。\n( Which, What, Who ) he said cannot be true.`, answer:`What`, explanation:`what は「〜するもの/こと」という意味で、先行詞を含んだ関係代名詞です。` }));
-    addQ(12, "標準", "thatの用法", () => ({ text:`次の文に that の用法が当てはまるなら○、そうでないなら×を書きなさい。\nThis is the longest bridge that I've ever seen.`, answer:`○`, explanation:`先行詞に最上級(the longest)がついている場合、関係代名詞は that を好んで使います。` }));
-    addQ(12, "標準", "関係代名詞結合", () => ({ text:`2つの文を that を用いて1文にしなさい。\nHe has a dog. Its name is Koro.`, answer:`He has a dog whose name is Koro.`, explanation:`所有格は that に置き換えられないため whose を使います（引っかけ問題）。` }));
-    addQ(12, "応用", "非制限用法", () => ({ text:`意味の違いに注意して日本文になおしなさい。\n① He has three sons who work in the same factory.\n② He has three sons, who work in the same factory.`, answer:`①彼には同じ工場で働く3人の息子がいる。\n②彼には3人の息子がいて、(その3人は)同じ工場で働いている。`, explanation:`カンマ(,)を伴う非制限用法は、前から順に訳して「〜だが、そしてそれは」と補足説明を加えるニュアンスになります。` }));
-    addQ(12, "応用", "非制限用法(which)", () => ({ text:`（　）に適する関係代名詞を入れなさい。\nHe said he was a doctor, (   ) we didn't believe.`, answer:`which`, explanation:`先行詞が直前の文全体(彼が医者だと言ったこと)になる関係代名詞は which です。` }));
-    addQ(12, "応用", "whatの慣用表現", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\n彼は以前の彼ではありません。\nHe is not (   )(   ) used to be.`, answer:`what he`, explanation:`what S is(was/used to be) で「現在(過去)のSの姿・人柄」を表します。` }));
+    addQ(12, "基礎", "関係代名詞の選択", () => { 
+        const n=rName(); 
+        return r([
+          { text:`（　）に who, whose, whom のいずれかを入れなさい。\nThe boy (   ) is playing soccer is ${n}.`, answer:`who`, explanation:`先行詞(The boy)が人で、関係詞節の中で主語の働きをしているので主格の who を使います。` },
+          { text:`（　）に which, whose のいずれかを入れなさい。\nLook at the house (   ) roof is red.`, answer:`whose`, explanation:`「その家の屋根」という所有の関係(the roof of the house)を表すので、所有格の whose を使います。` },
+          { text:`2つの文を that 以外の関係代名詞を用いて1文にしなさい。\nI have an aunt. She lives in Kobe.`, answer:`I have an aunt who lives in Kobe.`, explanation:`先行詞が人で主格なので who を使って繋ぎます。` }
+        ]);
+    });
+    addQ(12, "標準", "関係代名詞whatとthat", () => { 
+        return r([
+          { text:`（　）内から適する語を選びなさい。\n( Which, What, Who ) he said cannot be true.`, answer:`What`, explanation:`what は「〜するもの/こと」という意味で、先行詞を含んだ関係代名詞です。` },
+          { text:`次の文に that の用法が当てはまるなら○、そうでないなら×を書きなさい。\nThis is the longest bridge that I've ever seen.`, answer:`○`, explanation:`先行詞に最上級(the longest)がついている場合、関係代名詞は that を好んで使います。` },
+          { text:`2つの文を that を用いて1文にしなさい。\nHe has a dog. Its name is Koro.`, answer:`He has a dog whose name is Koro.`, explanation:`所有格は that に置き換えられないため whose を使います（引っかけ問題）。` }
+        ]);
+    });
+    addQ(12, "応用", "非制限用法など", () => { 
+        return r([
+          { text:`意味の違いに注意して日本文になおしなさい。\n① He has three sons who work in the same factory.\n② He has three sons, who work in the same factory.`, answer:`①彼には同じ工場で働く3人の息子がいる。\n②彼には3人の息子がいて、(その3人は)同じ工場で働いている。`, explanation:`カンマ(,)を伴う非制限用法は、前から順に訳して「〜だが、そしてそれは」と補足説明を加えるニュアンスになります。` },
+          { text:`（　）に適する関係代名詞を入れなさい。\nHe said he was a doctor, (   ) we didn't believe.`, answer:`which`, explanation:`先行詞が直前の文全体(彼が医者だと言ったこと)になる関係代名詞は which です。` },
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\n彼は以前の彼ではありません。\nHe is not (   )(   ) used to be.`, answer:`what he`, explanation:`what S is(was/used to be) で「現在(過去)のSの姿・人柄」を表します。` }
+        ]);
+    });
 
     // 第13章 関係副詞
-    addQ(13, "基礎", "関係副詞", () => ({ text:`（　）に適する関係副詞を入れなさい。\nThis is the village (   ) the well-known cook lives.`, answer:`where`, explanation:`先行詞が場所(the village)で、関係詞節の中で「そこで」という副詞の働きをするため where を使います。` }));
-    addQ(13, "基礎", "関係副詞", () => ({ text:`（　）に適する関係副詞を入れなさい。\nThe day (   ) you were born was very cold.`, answer:`when`, explanation:`先行詞が時(day)なので、関係副詞 when を使います。` }));
-    addQ(13, "基礎", "関係副詞", () => ({ text:`（　）に適する関係副詞を入れなさい。\nDo you know the reason (   ) he didn't come?`, answer:`why`, explanation:`先行詞が理由(reason)なので、関係副詞 why を使います。` }));
-    addQ(13, "標準", "関係副詞結合", () => ({ text:`関係副詞を使って2つの文を1文にしなさい。\nThat is the place. The accident happened there.`, answer:`That is the place where the accident happened.`, explanation:`there (その場所で) という副詞句を where に変えて2つの文を繋ぎます。` }));
-    addQ(13, "標準", "関係副詞 how", () => ({ text:`（　）に適する語を入れなさい。\nTell me the (   )(   ) you solved this problem. (どのようにこの問題を解いたか)`, answer:`way how (但し不可)`, explanation:`the way how は一緒に使えないため、the way だけで「〜する方法」を表します（答えは The way または How 1語）。` }));
-    addQ(13, "標準", "前置詞＋関係代名詞", () => ({ text:`（　）に適する語を入れなさい。\nThis is the house (   ) my grandparents used to live in.`, answer:`which [that]`, explanation:`最後に前置詞 in が残っているので、関係副詞 where ではなく関係代名詞を使います。` }));
-    addQ(13, "応用", "非制限用法", () => ({ text:`同じ内容になるように、（　）に適する語を入れなさい。\nI visited Kobe, and there I met an old friend of mine.\nI visited Kobe, (   ) I met an old friend of mine.`, answer:`where`, explanation:`, where は「そしてそこで〜」と場所について補足説明を加える関係副詞の非制限用法です。` }));
-    addQ(13, "応用", "非制限用法", () => ({ text:`同じ内容になるように（　）に適する語を入れなさい。\nHe came to see me at six, but I was out then.\nHe came to see me at six, (   ) I was out.`, answer:`when`, explanation:`, when は「そしてその時〜(だったがその時〜)」という時について補足説明を加える非制限用法です。` }));
-    addQ(13, "応用", "誤文訂正", () => ({ text:`誤りの部分に下線を引いて正しい表現を書きなさい。\nThat is the house which my uncle lives.`, answer:`which -> in which [where]`, explanation:`live in the house と in が必要なので、which だけでは不完全です。` }));
+    addQ(13, "基礎", "関係副詞の選択", () => { 
+        return r([
+          { text:`（　）に適する関係副詞を入れなさい。\nThis is the village (   ) the well-known cook lives.`, answer:`where`, explanation:`先行詞が場所(the village)で、関係詞節の中で「そこで」という副詞の働きをするため where を使います。` },
+          { text:`（　）に適する関係副詞を入れなさい。\nThe day (   ) you were born was very cold.`, answer:`when`, explanation:`先行詞が時(day)なので、関係副詞 when を使います。` },
+          { text:`（　）に適する関係副詞を入れなさい。\nDo you know the reason (   ) he didn't come?`, answer:`why`, explanation:`先行詞が理由(reason)なので、関係副詞 why を使います。` }
+        ]);
+    });
+    addQ(13, "標準", "関係副詞の結合と表現", () => { 
+        return r([
+          { text:`関係副詞を使って2つの文を1文にしなさい。\nThat is the place. The accident happened there.`, answer:`That is the place where the accident happened.`, explanation:`there (その場所で) という副詞句を where に変えて2つの文を繋ぎます。` },
+          { text:`（　）に適する語を入れなさい。\nTell me the (   )(   ) you solved this problem. (どのようにこの問題を解いたか)`, answer:`way how (但し不可)`, explanation:`the way how は一緒に使えないため、the way だけで「〜する方法」を表します（答えは The way または How 1語）。` },
+          { text:`（　）に適する語を入れなさい。\nThis is the house (   ) my grandparents used to live in.`, answer:`which [that]`, explanation:`最後に前置詞 in が残っているので、関係副詞 where ではなく関係代名詞を使います。` }
+        ]);
+    });
+    addQ(13, "応用", "関係副詞の非制限用法", () => { 
+        return r([
+          { text:`同じ内容になるように、（　）に適する語を入れなさい。\nI visited Kobe, and there I met an old friend of mine.\nI visited Kobe, (   ) I met an old friend of mine.`, answer:`where`, explanation:`, where は「そしてそこで〜」と場所について補足説明を加える関係副詞の非制限用法です。` },
+          { text:`同じ内容になるように（　）に適する語を入れなさい。\nHe came to see me at six, but I was out then.\nHe came to see me at six, (   ) I was out.`, answer:`when`, explanation:`, when は「そしてその時〜(だったがその時〜)」という時について補足説明を加える非制限用法です。` },
+          { text:`誤りの部分に下線を引いて正しい表現を書きなさい。\nThat is the house which my uncle lives.`, answer:`which -> in which [where]`, explanation:`live in the house と in が必要なので、which だけでは不完全です。` }
+        ]);
+    });
 
     // 第14章 比較
-    addQ(14, "基礎", "比較変化", () => ({ text:`次の語の比較級と最上級を書きなさい。\nbusy`, answer:`busier - busiest`, explanation:`子音字+y で終わる語は、y を i に変えて er / est をつけるという規則があります。` }));
-    addQ(14, "基礎", "比較変化", () => ({ text:`次の語の比較級と最上級を書きなさい。\nfamous`, answer:`more famous - most famous`, explanation:`長い単語(3音節以上など)はmore/mostをつけて比較変化を作ります。` }));
-    addQ(14, "基礎", "原級", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n久美は私の妹と同じ年齢です。\nKumi is (   )(   )(   ) my sister.`, answer:`as old as`, explanation:`as + 形容詞の原級 + as で「〜と同じくらい…だ」という同等比較を表します。` }));
-    addQ(14, "標準", "倍数表現", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n琵琶湖はこの湖の約3倍の大きさです。\nLake Biwa is about (   )(   )(   )(   ) this lake.`, answer:`three times as large as`, explanation:`X times as ~ as B で「BのX倍〜だ」という倍数表現になります。` }));
-    addQ(14, "標準", "比較級", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\n彼女は彼女のお姉さんよりも3歳年下です。\nShe is three years (   )(   ) her sister.`, answer:`younger than`, explanation:`差を表す語句(three years)は比較級(younger)の直前に置きます。` }));
-    addQ(14, "標準", "比較級の強調", () => ({ text:`（　）に適する語を入れなさい。\nFrench isn't as easy as English.\nFrench is (   )(   ) than English.`, answer:`more difficult`, explanation:`「英語ほど簡単ではない」＝「英語より難しい」と言い換えます。` }));
-    addQ(14, "応用", "最上級相当", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nNo one in our school plays tennis better than Mary.\nMary is the (   ) tennis player in our school.`, answer:`best`, explanation:`No (other) ~ 比較級 than A で「Aより〜なものはない」＝「Aが一番〜だ」という最上級の意味に書き換えられます。` }));
-    addQ(14, "応用", "最上級相当", () => ({ text:`同じ意味になるように指示に従って書きかえなさい。\nMt. Fuji is the highest mountain in Japan.\n( No other...から始めて )`, answer:`No other mountain in Japan is higher than Mt. Fuji. [as high as Mt. Fuji.]`, explanation:`最上級を原級や比較級を用いて表現する重要構文です。` }));
-    addQ(14, "応用", "比較の慣用表現", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\n高く登れば登るほど、ますます寒くなります。\n(   )(   ) we climb, (   )(   ) it becomes.`, answer:`The higher / the colder`, explanation:`The 比較級 ~, the 比較級 ... (〜すればするほど、ますます…だ)の構文です。` }));
+    addQ(14, "基礎", "比較変化・原級", () => { 
+        return r([
+          { text:`次の語の比較級と最上級を書きなさい。\nbusy`, answer:`busier - busiest`, explanation:`子音字+y で終わる語は、y を i に変えて er / est をつけるという規則があります。` },
+          { text:`次の語の比較級と最上級を書きなさい。\nfamous`, answer:`more famous - most famous`, explanation:`長い単語(3音節以上など)はmore/mostをつけて比較変化を作ります。` },
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n久美は私の妹と同じ年齢です。\nKumi is (   )(   )(   ) my sister.`, answer:`as old as`, explanation:`as + 形容詞の原級 + as で「〜と同じくらい…だ」という同等比較を表します。` }
+        ]);
+    });
+    addQ(14, "標準", "比較級・倍数", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n琵琶湖はこの湖の約3倍の大きさです。\nLake Biwa is about (   )(   )(   )(   ) this lake.`, answer:`three times as large as`, explanation:`X times as ~ as B で「BのX倍〜だ」という倍数表現になります。` },
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\n彼女は彼女のお姉さんよりも3歳年下です。\nShe is three years (   )(   ) her sister.`, answer:`younger than`, explanation:`差を表す語句(three years)は比較級(younger)の直前に置きます。` },
+          { text:`（　）に適する語を入れなさい。\nFrench isn't as easy as English.\nFrench is (   )(   ) than English.`, answer:`more difficult`, explanation:`「英語ほど簡単ではない」＝「英語より難しい」と言い換えます。` }
+        ]);
+    });
+    addQ(14, "応用", "最上級相当・慣用表現", () => { 
+        return r([
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nNo one in our school plays tennis better than Mary.\nMary is the (   ) tennis player in our school.`, answer:`best`, explanation:`No (other) ~ 比較級 than A で「Aより〜なものはない」＝「Aが一番〜だ」という最上級の意味に書き換えられます。` },
+          { text:`同じ意味になるように指示に従って書きかえなさい。\nMt. Fuji is the highest mountain in Japan.\n( No other...から始めて )`, answer:`No other mountain in Japan is higher than Mt. Fuji. [as high as Mt. Fuji.]`, explanation:`最上級を原級や比較級を用いて表現する重要構文です。` },
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\n高く登れば登るほど、ますます寒くなります。\n(   )(   ) we climb, (   )(   ) it becomes.`, answer:`The higher / the colder`, explanation:`The 比較級 ~, the 比較級 ... (〜すればするほど、ますます…だ)の構文です。` }
+        ]);
+    });
 
     // 第15章 仮定法
-    addQ(15, "基礎", "仮定法", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし私に翼があったら、君のところに飛んで行けるのに。\nIf I (   ) wings, I could fly to you.`, answer:`had`, explanation:`現在の事実に反する仮定は、If S + 過去形 の「仮定法過去」を使って表します。` }));
-    addQ(15, "基礎", "仮定法(be動詞)", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\nもし私が鳥なら、君のところに飛んで行けるのに。\nIf I (   ) a bird, I could fly to you.`, answer:`were`, explanation:`仮定法過去のbe動詞は、主語がIやHeでも原則 were を使います。` }));
-    addQ(15, "基礎", "仮定法(I wish)", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\n君たちと一緒に行けたらなあ。\nI (   ) I (   ) go with you.`, answer:`wish / could`, explanation:`I wish S 過去形 で「（今）〜であればなあ」という実現困難な願望を表します。` }));
-    addQ(15, "標準", "仮定法過去完了", () => ({ text:`仮定法の文に書きかえるとき、（　）に適する語を入れなさい。\nAs I was so tired, I didn't play tennis.\nIf I (   )(   ) so tired, I (   )(   ) tennis.`, answer:`had not been / would have played`, explanation:`過去の事実に反する仮定は、If S had 過去分詞 ~, S would have 過去分詞 という「仮定法過去完了」を使います。` }));
-    addQ(15, "標準", "仮定法過去完了(I wish)", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\n私もそのコンサートへ行っていたらなあ。\nI (   ) I (   )(   ) to the concert.`, answer:`wish / had gone`, explanation:`過去の事実に反する願望(あの時〜だったらなあ)は I wish S had p.p. です。` }));
-    addQ(15, "標準", "慣用表現", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし水がなかったら、どんな生物も生きていけないだろう。\n(   ) it (   )(   )(   ) water, no living things could exist.`, answer:`If / were not for`, explanation:`If it were not for ~ で「もし（今）〜がなければ」という意味の重要な慣用表現です。` }));
-    addQ(15, "応用", "慣用表現(過去)", () => ({ text:`日本文の意味を表すように（　）に適する語を入れなさい。\nあなたの助言がなかったら、彼は失敗していたでしょう。\nIf it (   )(   )(   )(   ) your advice, he would have failed.`, answer:`had not been for`, explanation:`If it had not been for ~ で「もし（あの時）〜がなかったら」です。` }));
-    addQ(15, "応用", "慣用表現の書き換え", () => ({ text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nIf it were not for your help, I would not succeed.\n(   ) your help, I would not succeed.`, answer:`Without [But for]`, explanation:`Without ~ や But for ~ は、仮定法の If it were not for ~ / If it had not been for ~ の代わりになります。` }));
-    addQ(15, "応用", "倒置", () => ({ text:`同じ意味になるように（　）に適する語を入れなさい。\nIf I were a bird, I could fly to you.\n(   ) I a bird, I could fly to you.`, answer:`Were`, explanation:`Ifを省略すると、主語と動詞が倒置して Were I ~ という形になります。` }));
+    addQ(15, "基礎", "仮定法過去", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし私に翼があったら、君のところに飛んで行けるのに。\nIf I (   ) wings, I could fly to you.`, answer:`had`, explanation:`現在の事実に反する仮定は、If S + 過去形 の「仮定法過去」を使って表します。` },
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\nもし私が鳥なら、君のところに飛んで行けるのに。\nIf I (   ) a bird, I could fly to you.`, answer:`were`, explanation:`仮定法過去のbe動詞は、主語がIやHeでも原則 were を使います。` },
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\n君たちと一緒に行けたらなあ。\nI (   ) I (   ) go with you.`, answer:`wish / could`, explanation:`I wish S 過去形 で「（今）〜であればなあ」という実現困難な願望を表します。` }
+        ]);
+    });
+    addQ(15, "標準", "仮定法過去完了", () => { 
+        return r([
+          { text:`仮定法の文に書きかえるとき、（　）に適する語を入れなさい。\nAs I was so tired, I didn't play tennis.\nIf I (   )(   ) so tired, I (   )(   ) tennis.`, answer:`had not been / would have played`, explanation:`過去の事実に反する仮定は、If S had 過去分詞 ~, S would have 過去分詞 という「仮定法過去完了」を使います。` },
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\n私もそのコンサートへ行っていたらなあ。\nI (   ) I (   )(   ) to the concert.`, answer:`wish / had gone`, explanation:`過去の事実に反する願望(あの時〜だったらなあ)は I wish S had p.p. です。` },
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし水がなかったら、どんな生物も生きていけないだろう。\n(   ) it (   )(   )(   ) water, no living things could exist.`, answer:`If / were not for`, explanation:`If it were not for ~ で「もし（今）〜がなければ」という意味の重要な慣用表現です。` }
+        ]);
+    });
+    addQ(15, "応用", "仮定法の慣用表現・倒置", () => { 
+        return r([
+          { text:`日本文の意味を表すように（　）に適する語を入れなさい。\nあなたの助言がなかったら、彼は失敗していたでしょう。\nIf it (   )(   )(   )(   ) your advice, he would have failed.`, answer:`had not been for`, explanation:`If it had not been for ~ で「もし（あの時）〜がなかったら」です。` },
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nIf it were not for your help, I would not succeed.\n(   ) your help, I would not succeed.`, answer:`Without [But for]`, explanation:`Without ~ や But for ~ は、仮定法の If it were not for ~ / If it had not been for ~ の代わりになります。` },
+          { text:`同じ意味になるように（　）に適する語を入れなさい。\nIf I were a bird, I could fly to you.\n(   ) I a bird, I could fly to you.`, answer:`Were`, explanation:`Ifを省略すると、主語と動詞が倒置して Were I ~ という形になります。` }
+        ]);
+    });
 
     // 第16章 接続詞、間接疑問文
-    addQ(16, "基礎", "接続詞", () => ({ text:`（　）に and, but, or, for, so のいずれかを入れなさい。\nIt was raining hard, (   ) we decided not to go.`, answer:`so`, explanation:`「雨が激しく降っていた、だから行かないことにした」という原因と結果を繋ぐ等位接続詞 so が適当です。` }));
-    addQ(16, "基礎", "接続詞(命令文)", () => ({ text:`（　）に and, but, or, for, so のいずれかを入れなさい。\nHurry up, (   ) you'll be late.`, answer:`or`, explanation:`命令文, or ~ で「…しなさい、さもないと〜」です(and だと「そうすれば」)。` }));
-    addQ(16, "基礎", "相関接続詞", () => ({ text:`日本語を参考にして（　）に適する語を入れなさい。\nShe can speak (   ) English (   ) French. (英語だけでなくフランス語も)`, answer:`not only / but also`, explanation:`not only A but (also) B で「AだけでなくBも」です。` }));
-    addQ(16, "標準", "間接疑問文", () => ({ text:`それぞれの書き出しに続けて、間接疑問文にしなさい。\nWhere did she go yesterday? / Do you know?\n-> Do you know (   ) (   ) (   ) yesterday?`, answer:`where she went`, explanation:`疑問詞で始まる疑問文が文の一部になる場合、<疑問詞 + 主語 + 動詞> の平叙文の語順になります。` }));
-    addQ(16, "標準", "間接疑問文(Yes/No)", () => ({ text:`間接疑問文にしなさい。\nAre you busy? / Bob said to me.\n-> Bob asked me (   ) I (   ) busy.`, answer:`if [whether] / was`, explanation:`Yes/No疑問文を間接疑問文にする時は、文頭に if または whether を使います。時制の一致にも注意。` }));
-    addQ(16, "標準", "接続詞(書き換え)", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIf you start at once, you won't be late.\nStart at once, (   ) you will be (   ) time.`, answer:`and / in`, explanation:`命令文, and ~ で「…しなさい、そうすれば〜」という意味になり、If を使った条件文と同じ内容を表せます。` }));
-    addQ(16, "応用", "間接疑問文(think)", () => ({ text:`2つの文を1文にしなさい。\nWho is that man? / Do you think?\n-> (   )(   ) you think that man (   )?`, answer:`Who do / is`, explanation:`think, suppose 等の認識動詞が続く場合、Yes/Noで答えられないので疑問詞(Who)は文頭に出ます。` }));
-    addQ(16, "応用", "接続詞(so...that)", () => ({ text:`書きかえなさい。\nHe was too tired to walk.\nHe was (   ) tired (   ) he (   )(   ) walk.`, answer:`so / that / could not`, explanation:`too ~ to V (〜すぎてVできない) は so ~ that S cannot(could not) V に書き換えられます。` }));
-    addQ(16, "応用", "接続詞(in case)", () => ({ text:`日本語を参考にして（　）に適する語を入れなさい。\n(   )(   ) you need my help, please call me. (私の助けが必要な場合には)`, answer:`In case`, explanation:`in case S V は「SがVする場合に備えて、もしSがVなら」の意味の接続詞です。` }));
+    addQ(16, "基礎", "等位接続詞", () => { 
+        return r([
+          { text:`（　）に and, but, or, for, so のいずれかを入れなさい。\nIt was raining hard, (   ) we decided not to go.`, answer:`so`, explanation:`「雨が激しく降っていた、だから行かないことにした」という原因と結果を繋ぐ等位接続詞 so が適当です。` },
+          { text:`（　）に and, but, or, for, so のいずれかを入れなさい。\nHurry up, (   ) you'll be late.`, answer:`or`, explanation:`命令文, or ~ で「…しなさい、さもないと〜」です(and だと「そうすれば」)。` },
+          { text:`日本語を参考にして（　）に適する語を入れなさい。\nShe can speak (   ) English (   ) French. (英語だけでなくフランス語も)`, answer:`not only / but also`, explanation:`not only A but (also) B で「AだけでなくBも」です。` }
+        ]);
+    });
+    addQ(16, "標準", "間接疑問文", () => { 
+        return r([
+          { text:`それぞれの書き出しに続けて、間接疑問文にしなさい。\nWhere did she go yesterday? / Do you know?\n-> Do you know (   ) (   ) (   ) yesterday?`, answer:`where she went`, explanation:`疑問詞で始まる疑問文が文の一部になる場合、<疑問詞 + 主語 + 動詞> の平叙文の語順になります。` },
+          { text:`間接疑問文にしなさい。\nAre you busy? / Bob said to me.\n-> Bob asked me (   ) I (   ) busy.`, answer:`if [whether] / was`, explanation:`Yes/No疑問文を間接疑問文にする時は、文頭に if または whether を使います。時制の一致にも注意。` },
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIf you start at once, you won't be late.\nStart at once, (   ) you will be (   ) time.`, answer:`and / in`, explanation:`命令文, and ~ で「…しなさい、そうすれば〜」という意味になり、If を使った条件文と同じ内容を表せます。` }
+        ]);
+    });
+    addQ(16, "応用", "間接疑問文・接続詞の応用", () => { 
+        return r([
+          { text:`2つの文を1文にしなさい。\nWho is that man? / Do you think?\n-> (   )(   ) you think that man (   )?`, answer:`Who do / is`, explanation:`think, suppose 等の認識動詞が続く場合、Yes/Noで答えられないので疑問詞(Who)は文頭に出ます。` },
+          { text:`書きかえなさい。\nHe was too tired to walk.\nHe was (   ) tired (   ) he (   )(   ) walk.`, answer:`so / that / could not`, explanation:`too ~ to V (〜すぎてVできない) は so ~ that S cannot(could not) V に書き換えられます。` },
+          { text:`日本語を参考にして（　）に適する語を入れなさい。\n(   )(   ) you need my help, please call me. (私の助けが必要な場合には)`, answer:`In case`, explanation:`in case S V は「SがVする場合に備えて、もしSがVなら」の意味の接続詞です。` }
+        ]);
+    });
 
     // 第17章 句と節
-    addQ(17, "基礎", "句と節の判別", () => ({ text:`下線部が名詞句ならA、形容詞句ならB、副詞句ならCを書きなさい。\nJim likes [listening to music].`, answer:`A`, explanation:`listening to music が動詞 likes の目的語(O)になっているため、名詞と同じ働きをする名詞句です。` }));
-    addQ(17, "基礎", "句と節の判別", () => ({ text:`下線部が名詞句ならA、形容詞句ならB、副詞句ならCを書きなさい。\nThe girl [playing the piano] is Cathy.`, answer:`B`, explanation:`前の名詞(The girl)を修飾しているため、形容詞と同じ働きをする形容詞句です。` }));
-    addQ(17, "基礎", "句と節の判別", () => ({ text:`下線部が名詞節ならA、形容詞節ならB、副詞節ならCを書きなさい。\nDo you know [where he lives]?`, answer:`A`, explanation:`動詞knowの目的語になっているため、名詞節(間接疑問文)です。` }));
-    addQ(17, "標準", "書き換え(節から句)", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that Jane is fond of Japanese food.\nJane seems (   )(   ) fond of Japanese food.`, answer:`to be`, explanation:`It seems that S V ~ は、S seems to不定詞 に書き換えることができます(節から句への書き換え)。` }));
-    addQ(17, "標準", "書き換え(節から句)", () => ({ text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nI hope that I will hear from you soon.\nI hope (   )(   ) from you soon.`, answer:`to hear`, explanation:`hope that節 を hope to V(名詞句) に書き換えます。` }));
-    addQ(17, "標準", "無生物主語", () => ({ text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nWhy did you come here?\n(   )(   ) you here?`, answer:`What brought`, explanation:`What brought you here? (何があなたをここに連れてきたか) で「なぜここへ来たのですか」という意味になります。` }));
-    addQ(17, "応用", "無生物主語(take)", () => ({ text:`日本文の意味になるように（　）に適する語を入れなさい。\nこのバスに乗れば病院へ行けます。\nThis bus will (   ) you (   ) the hospital.`, answer:`take / to`, explanation:`take A to B で「AをBへ連れて行く」という無生物主語の構文です。` }));
-    addQ(17, "応用", "無生物主語(prevent)", () => ({ text:`日本文の意味になるように（　）に適する語を入れなさい。\nその嵐のために船は出港できなかった。\nThe storm (   ) the ship (   ) leaving port.`, answer:`prevented [kept] / from`, explanation:`prevent O from ~ing で「(主語のせいで)Oが〜するのを妨げる」という構文です。` }));
-    addQ(17, "応用", "無生物主語(make)", () => ({ text:`日本文の意味になるように（　）内の語句を並べかえなさい。\n心変わりした理由は何ですか。\nWhat ( change / made / you / your mind )?`, answer:`made you change your mind`, explanation:`What made you 原形? (何があなたに〜させたか) で「なぜ〜したか」を表します。` }));
+    addQ(17, "基礎", "句と節の判別", () => { 
+        return r([
+          { text:`下線部が名詞句ならA、形容詞句ならB、副詞句ならCを書きなさい。\nJim likes [listening to music].`, answer:`A`, explanation:`listening to music が動詞 likes の目的語(O)になっているため、名詞と同じ働きをする名詞句です。` },
+          { text:`下線部が名詞句ならA、形容詞句ならB、副詞句ならCを書きなさい。\nThe girl [playing the piano] is Cathy.`, answer:`B`, explanation:`前の名詞(The girl)を修飾しているため、形容詞と同じ働きをする形容詞句です。` },
+          { text:`下線部が名詞節ならA、形容詞節ならB、副詞節ならCを書きなさい。\nDo you know [where he lives]?`, answer:`A`, explanation:`動詞knowの目的語になっているため、名詞節(間接疑問文)です。` }
+        ]);
+    });
+    addQ(17, "標準", "句への書き換え", () => { 
+        return r([
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that Jane is fond of Japanese food.\nJane seems (   )(   ) fond of Japanese food.`, answer:`to be`, explanation:`It seems that S V ~ は、S seems to不定詞 に書き換えることができます(節から句への書き換え)。` },
+          { text:`ほぼ同じ内容になるように（　）に適する語を入れなさい。\nI hope that I will hear from you soon.\nI hope (   )(   ) from you soon.`, answer:`to hear`, explanation:`hope that節 を hope to V(名詞句) に書き換えます。` },
+          { text:`ほぼ同じ内容になるように、（　）に適する語を入れなさい。\nWhy did you come here?\n(   )(   ) you here?`, answer:`What brought`, explanation:`What brought you here? (何があなたをここに連れてきたか) で「なぜここへ来たのですか」という意味になります。` }
+        ]);
+    });
+    addQ(17, "応用", "無生物主語", () => { 
+        return r([
+          { text:`日本文の意味になるように（　）に適する語を入れなさい。\nこのバスに乗れば病院へ行けます。\nThis bus will (   ) you (   ) the hospital.`, answer:`take / to`, explanation:`take A to B で「AをBへ連れて行く」という無生物主語の構文です。` },
+          { text:`日本文の意味になるように（　）に適する語を入れなさい。\nその嵐のために船は出港できなかった。\nThe storm (   ) the ship (   ) leaving port.`, answer:`prevented [kept] / from`, explanation:`prevent O from ~ing で「(主語のせいで)Oが〜するのを妨げる」という構文です。` },
+          { text:`日本文の意味になるように（　）内の語句を並べかえなさい。\n心変わりした理由は何ですか。\nWhat ( change / made / you / your mind )?`, answer:`made you change your mind`, explanation:`What made you 原形? (何があなたに〜させたか) で「なぜ〜したか」を表します。` }
+        ]);
+    });
 
     // 第18章 話法
-    addQ(18, "基礎", "時制の一致", () => ({ text:`（　）内から適する語を選びなさい。\nI thought that it ( will, would ) rain the next morning.`, answer:`would`, explanation:`主節の動詞(thought)が過去形なので、従属節の will も過去形(would)にする必要があります。` }));
-    addQ(18, "基礎", "時制の一致", () => ({ text:`下線部の動詞を過去形にし、（　）に適する語を入れなさい。\nI know that she is a good pianist.\n-> I (   ) that she (   ) a good pianist.`, answer:`knew / was`, explanation:`主節の動詞がknewになるため、時制の一致でisもwasになります。` }));
-    addQ(18, "基礎", "時制の一致の例外", () => ({ text:`下線部の動詞を過去形にし、（　）に適する語を入れなさい。\nOur teacher says that the earth is round.\n-> Our teacher (   ) that the earth (   ) round.`, answer:`said / is`, explanation:`不変の真理(地球は丸い)は、主節が過去になっても現在形のままにします。` }));
-    addQ(18, "標準", "話法(平叙文)", () => ({ text:`間接話法の文に書きかえなさい。\nHe said to me, "I'm hungry."`, answer:`He told me that he was hungry.`, explanation:`平叙文の伝達は said to ~ を told ~ にし、代名詞や時制を話者の立場に合わせて書き換えます。` }));
-    addQ(18, "標準", "話法(疑問文)", () => ({ text:`間接話法の文に書きかえなさい。\nBob said to me, "Are you tired?"\nBob (   ) me (   ) I (   ) tired.`, answer:`asked / if [whether] / was`, explanation:`Yes/No疑問文は ask + if/whether + S + V の順にして間接話法を作ります。` }));
-    addQ(18, "標準", "話法(命令文)", () => ({ text:`間接話法の文に書きかえなさい。\nHe said to me, "Do it at once."\nHe (   ) me (   ) do it at once.`, answer:`told / to`, explanation:`命令文の伝達は tell/advise/ask O to不定詞 (Oに〜するように言う) を使って書き換えます。` }));
-    addQ(18, "応用", "代名詞・副詞の転換", () => ({ text:`間接話法の文に書きかえるとき、（　）に適する語を入れなさい。\nHe said, "I'm leaving tomorrow."\nHe said that he was leaving (   )(   ).`, answer:`the next day [the following day]`, explanation:`直接話法の tomorrow は間接話法では the next day などに変わります。` }));
-    addQ(18, "応用", "時制・副詞の転換", () => ({ text:`間接話法の文に書きかえるとき、（　）に適する語を入れなさい。\nKen said, "I watched the movie yesterday."\nKen said that he (   ) watched the movie (   )(   )(   ).`, answer:`had / the day before [the previous day]`, explanation:`yesterday は the day before になり、過去形watchedは1つ昔の過去完了had watchedになります。` }));
-    addQ(18, "応用", "話法(否定命令)", () => ({ text:`間接話法の文に書きかえなさい。\nThe doctor said to me, "Don't smoke too much."\nThe doctor (   ) me (   )(   ) smoke too much.`, answer:`advised [told] / not to`, explanation:`否定の命令文(Don't)は tell/advise O not to V にします。` }));
+    addQ(18, "基礎", "時制の一致", () => { 
+        return r([
+          { text:`（　）内から適する語を選びなさい。\nI thought that it ( will, would ) rain the next morning.`, answer:`would`, explanation:`主節の動詞(thought)が過去形なので、従属節の will も過去形(would)にする必要があります。` },
+          { text:`下線部の動詞を過去形にし、（　）に適する語を入れなさい。\nI know that she is a good pianist.\n-> I (   ) that she (   ) a good pianist.`, answer:`knew / was`, explanation:`主節の動詞がknewになるため、時制の一致でisもwasになります。` },
+          { text:`下線部の動詞を過去形にし、（　）に適する語を入れなさい。\nOur teacher says that the earth is round.\n-> Our teacher (   ) that the earth (   ) round.`, answer:`said / is`, explanation:`不変の真理(地球は丸い)は、主節が過去になっても現在形のままにします。` }
+        ]);
+    });
+    addQ(18, "標準", "話法の転換", () => { 
+        return r([
+          { text:`間接話法の文に書きかえなさい。\nHe said to me, "I'm hungry."`, answer:`He told me that he was hungry.`, explanation:`平叙文の伝達は said to ~ を told ~ にし、代名詞や時制を話者の立場に合わせて書き換えます。` },
+          { text:`間接話法の文に書きかえなさい。\nBob said to me, "Are you tired?"\nBob (   ) me (   ) I (   ) tired.`, answer:`asked / if [whether] / was`, explanation:`Yes/No疑問文は ask + if/whether + S + V の順にして間接話法を作ります。` },
+          { text:`間接話法の文に書きかえなさい。\nHe said to me, "Do it at once."\nHe (   ) me (   ) do it at once.`, answer:`told / to`, explanation:`命令文の伝達は tell/advise/ask O to不定詞 (Oに〜するように言う) を使って書き換えます。` }
+        ]);
+    });
+    addQ(18, "応用", "話法の応用", () => { 
+        return r([
+          { text:`間接話法の文に書きかえるとき、（　）に適する語を入れなさい。\nHe said, "I'm leaving tomorrow."\nHe said that he was leaving (   )(   ).`, answer:`the next day [the following day]`, explanation:`直接話法の tomorrow は間接話法では the next day などに変わります。` },
+          { text:`間接話法の文に書きかえるとき、（　）に適する語を入れなさい。\nKen said, "I watched the movie yesterday."\nKen said that he (   ) watched the movie (   )(   )(   ).`, answer:`had / the day before [the previous day]`, explanation:`yesterday は the day before になり、過去形watchedは1つ昔の過去完了had watchedになります。` },
+          { text:`間接話法の文に書きかえなさい。\nThe doctor said to me, "Don't smoke too much."\nThe doctor (   ) me (   )(   ) smoke too much.`, answer:`advised [told] / not to`, explanation:`否定の命令文(Don't)は tell/advise O not to V にします。` }
+        ]);
+    });
 
     // 第19章 名詞、冠詞
-    addQ(19, "基礎", "冠詞(a/an)", () => ({ text:`（　）に a または an を入れなさい。\n(   ) useful animal / (   ) umbrella / (   ) year`, answer:`a / an / a`, explanation:`母音(アイウエオ)の音で始まる名詞の前には an をつけます。useful は[j]、year は[j]の音なので a になります。` }));
-    addQ(19, "基礎", "冠詞(a/an)", () => ({ text:`（　）に a または an を入れなさい。\n(   ) honest boy / (   ) hour / (   ) uniform`, answer:`an / an / a`, explanation:`honestやhourは発音が「オ・ア」の母音から、uniformは「ユ」の子音から始まります(つづりではなく発音で判断)。` }));
-    addQ(19, "基礎", "名詞の複数形", () => ({ text:`次の語の複数形を書きなさい。\ndish / baby / leaf`, answer:`dishes / babies / leaves`, explanation:`sh/ch等で終わる語はes、子音字+yはies、f/feはvesになります。` }));
-    addQ(19, "標準", "名詞", () => ({ text:`（　）内の語を適する形になおしなさい。\nHow many ( knife ) are there on the plate?`, answer:`knives`, explanation:`f または fe で終わる名詞(knife)は、v に変えて es をつけます。` }));
-    addQ(19, "標準", "名詞の所有格", () => ({ text:`（　）内の語を適する形になおしなさい。\nThis is ( Susan ) bike and that is ( her brother ).`, answer:`Susan's / her brother's`, explanation:`人名などの所有格は 's をつけます。` }));
-    addQ(19, "標準", "物質名詞の数え方", () => ({ text:`（　）に適する語を入れなさい。\nPlease give me a (   ) of paper. (1枚の紙)`, answer:`piece [sheet]`, explanation:`紙などの薄い物質名詞は a piece/sheet of で数えます。` }));
-    addQ(19, "応用", "冠詞の省略", () => ({ text:`下線部の冠詞が必要なものには○、不要なものには×を書きなさい。\nChildren start [the] school at the age of six in this country.`, answer:`×`, explanation:`school が「学校という建物」ではなく、本来の目的である「授業・教育」を意味する場合は無冠詞になります。` }));
-    addQ(19, "応用", "冠詞の省略", () => ({ text:`（　）に適する冠詞を書きなさい。必要がなければ×を書きなさい。\nMy parents are fond of (   ) tea.\nPass me (   ) salt, please.`, answer:`× / the`, explanation:`一般のお茶は不可算で無冠詞、食卓にある特定の塩は共通認識があるため the がつきます。` }));
-    addQ(19, "応用", "不定冠詞の位置", () => ({ text:`（　）内の語を並べかえなさい。\n( students / the / all ) in this school love Mr. Smith.`, answer:`all the students`, explanation:`all/both/half + the/所有格 + 名詞 の語順になります。` }));
+    addQ(19, "基礎", "冠詞と複数形", () => { 
+        return r([
+          { text:`（　）に a または an を入れなさい。\n(   ) useful animal / (   ) umbrella / (   ) year`, answer:`a / an / a`, explanation:`母音(アイウエオ)の音で始まる名詞の前には an をつけます。useful は[j]、year は[j]の音なので a になります。` },
+          { text:`（　）に a または an を入れなさい。\n(   ) honest boy / (   ) hour / (   ) uniform`, answer:`an / an / a`, explanation:`honestやhourは発音が「オ・ア」の母音から、uniformは「ユ」の子音から始まります(つづりではなく発音で判断)。` },
+          { text:`次の語の複数形を書きなさい。\ndish / baby / leaf`, answer:`dishes / babies / leaves`, explanation:`sh/ch等で終わる語はes、子音字+yはies、f/feはvesになります。` }
+        ]);
+    });
+    addQ(19, "標準", "名詞の所有格・数え方", () => { 
+        return r([
+          { text:`（　）内の語を適する形になおしなさい。\nHow many ( knife ) are there on the plate?`, answer:`knives`, explanation:`f または fe で終わる名詞(knife)は、v に変えて es をつけます。` },
+          { text:`（　）内の語を適する形になおしなさい。\nThis is ( Susan ) bike and that is ( her brother ).`, answer:`Susan's / her brother's`, explanation:`人名などの所有格は 's をつけます。` },
+          { text:`（　）に適する語を入れなさい。\nPlease give me a (   ) of paper. (1枚の紙)`, answer:`piece [sheet]`, explanation:`紙などの薄い物質名詞は a piece/sheet of で数えます。` }
+        ]);
+    });
+    addQ(19, "応用", "冠詞の省略と位置", () => { 
+        return r([
+          { text:`下線部の冠詞が必要なものには○、不要なものには×を書きなさい。\nChildren start [the] school at the age of six in this country.`, answer:`×`, explanation:`school が「学校という建物」ではなく、本来の目的である「授業・教育」を意味する場合は無冠詞になります。` },
+          { text:`（　）に適する冠詞を書きなさい。必要がなければ×を書きなさい。\nMy parents are fond of (   ) tea.\nPass me (   ) salt, please.`, answer:`× / the`, explanation:`一般のお茶は不可算で無冠詞、食卓にある特定の塩は共通認識があるため the がつきます。` },
+          { text:`（　）内の語を並べかえなさい。\n( students / the / all ) in this school love Mr. Smith.`, answer:`all the students`, explanation:`all/both/half + the/所有格 + 名詞 の語順になります。` }
+        ]);
+    });
 
     // 第20章 代名詞
-    addQ(20, "基礎", "代名詞", () => ({ text:`（　）内から適する語を選びなさい。\n( Each, Both ) of my parents are alive.`, answer:`Both`, explanation:`「両親(2人)の両方」を表すので Both が適当です。Each を使うと単数扱いになってしまいます。` }));
-    addQ(20, "基礎", "代名詞(some/any)", () => ({ text:`（　）内から適する語を選びなさい。\nWill you have ( some, any ) more tea?`, answer:`some`, explanation:`相手にYesと答えることを期待して勧める疑問文では、any ではなく some を用います。` }));
-    addQ(20, "基礎", "再帰代名詞", () => ({ text:`（　）内の日本語に合う英文を完成させなさい。\nPlease take care of (   ). （どうかお体を大切に）`, answer:`yourself`, explanation:`主語(You)と目的語が同じ場合、再帰代名詞(~self)を使います。` }));
-    addQ(20, "標準", "代名詞", () => { const c=rCity(); return { text:`（　）内から適する語を選びなさい。\nThe climate here is milder than ( that / those ) of ${c}.`, answer:`that`, explanation:`反復を避けるための代名詞で、単数名詞(the climate)の代わりには that を使います(複数は those)。` }; });
-    addQ(20, "標準", "不定代名詞", () => ({ text:`（　）に適する語を入れなさい。\nShe has two uncles. One lives in Canada and (   ) in Tokyo.`, answer:`the other`, explanation:`2つのうちの「1つ」と「残りのもう1つ」は one / the other で表します。` }));
-    addQ(20, "標準", "不定代名詞", () => ({ text:`（　）に適する語を入れなさい。\nI have lost my umbrella; I must buy a new (   ).`, answer:`one`, explanation:`「同じ種類のもの(ある傘)」なので it ではなく one を使います。` }));
-    addQ(20, "応用", "代名詞", () => ({ text:`（　）に適する語を入れなさい。\nSome come to school by bike, and (   ) on foot.`, answer:`others`, explanation:`Some ~, others ... で「〜なものもあれば、…なものもある」という全体の一部を取り出す表現になります。` }));
-    addQ(20, "応用", "itの特別用法", () => ({ text:`（　）内から適する語を選びなさい。\n( That, This, It ) takes about an hour to get there by car.`, answer:`It`, explanation:`時間・距離・天候などを表す文の主語は It を使います。` }));
-    addQ(20, "応用", "所有代名詞", () => ({ text:`誤りの部分に下線を引いて正しい表現を書きなさい。\nShe is a friend of him.`, answer:`him -> his`, explanation:`a friend of mine / his / hers (〜の友人の1人)という「二重所有格」の表現です。` }));
+    addQ(20, "基礎", "不定代名詞・再帰代名詞", () => { 
+        return r([
+          { text:`（　）内から適する語を選びなさい。\n( Each, Both ) of my parents are alive.`, answer:`Both`, explanation:`「両親(2人)の両方」を表すので Both が適当です。Each を使うと単数扱いになってしまいます。` },
+          { text:`（　）内から適する語を選びなさい。\nWill you have ( some, any ) more tea?`, answer:`some`, explanation:`相手にYesと答えることを期待して勧める疑問文では、any ではなく some を用います。` },
+          { text:`（　）内の日本語に合う英文を完成させなさい。\nPlease take care of (   ). （どうかお体を大切に）`, answer:`yourself`, explanation:`主語(You)と目的語が同じ場合、再帰代名詞(~self)を使います。` }
+        ]);
+    });
+    addQ(20, "標準", "代名詞の用法", () => { 
+        const c = rCity();
+        return r([
+          { text:`（　）内から適する語を選びなさい。\nThe climate here is milder than ( that / those ) of ${c}.`, answer:`that`, explanation:`反復を避けるための代名詞で、単数名詞(the climate)の代わりには that を使います(複数は those)。` },
+          { text:`（　）に適する語を入れなさい。\nShe has two uncles. One lives in Canada and (   ) in Tokyo.`, answer:`the other`, explanation:`2つのうちの「1つ」と「残りのもう1つ」は one / the other で表します。` },
+          { text:`（　）に適する語を入れなさい。\nI have lost my umbrella; I must buy a new (   ).`, answer:`one`, explanation:`「同じ種類のもの(ある傘)」なので it ではなく one を使います。` }
+        ]);
+    });
+    addQ(20, "応用", "代名詞の応用", () => { 
+        return r([
+          { text:`（　）に適する語を入れなさい。\nSome come to school by bike, and (   ) on foot.`, answer:`others`, explanation:`Some ~, others ... で「〜なものもあれば、…なものもある」という全体の一部を取り出す表現になります。` },
+          { text:`（　）内から適する語を選びなさい。\n( That, This, It ) takes about an hour to get there by car.`, answer:`It`, explanation:`時間・距離・天候などを表す文の主語は It を使います。` },
+          { text:`誤りの部分に下線を引いて正しい表現を書きなさい。\nShe is a friend of him.`, answer:`him -> his`, explanation:`a friend of mine / his / hers (〜の友人の1人)という「二重所有格」の表現です。` }
+        ]);
+    });
 
     // 第21章 形容詞、副詞
-    addQ(21, "基礎", "形容詞の位置", () => ({ text:`（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\nHe is (a) a (b) speaker (c) of English. (good)`, answer:`(b)`, explanation:`名詞を修飾する形容詞(good)は、名詞(speaker)の直前に置きます(a good speaker)。` }));
-    addQ(21, "基礎", "数量形容詞", () => ({ text:`（　）に最も適する語を選んで入れなさい。\nMy aunt is very sick; there is (   ) hope of her recovery. [ many / much / a few / a little / few / little ]`, answer:`little`, explanation:`hope(希望)は数えられない名詞で、文脈から「ほとんど望みがない」という意味になるため little を使います。` }));
-    addQ(21, "基礎", "副詞の位置", () => ({ text:`（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\n(a) I (b) go to school (c) by bike. (usually)`, answer:`(b)`, explanation:`頻度を表す副詞(usually)は、一般動詞の前、be動詞/助動詞の後に置きます。` }));
-    addQ(21, "標準", "数量形容詞", () => ({ text:`（　）に最も適する語を選んで入れなさい。\nShe is happy that she made (   ) mistakes in the test. [ many / much / a few / a little / few / little ]`, answer:`few`, explanation:`可算名詞(mistakes)で「ほとんどミスをしなかった(肯定的な結果)」という文脈なので、否定的なニュアンスを持つ few です。` }));
-    addQ(21, "標準", "副詞(enough)", () => ({ text:`（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\n(a) The boy (b) was (c) to carry my bag. (kind enough)`, answer:`(c) [was kind enough]`, explanation:`形容詞/副詞 + enough の語順になるため kind enough となります。` }));
-    addQ(21, "標準", "疑問副詞", () => ({ text:`（　）に適する語を入れ、対話を完成しなさい。\n" (   )(   ) is it from here to the city hall?" - "About 3 kilometers."`, answer:`How far`, explanation:`距離(3 kilometers)を尋ねているので How far です。` }));
-    addQ(21, "応用", "注意すべき副詞", () => ({ text:`（　）内から適切な語を選びなさい。\nJohn often comes ( late, lately ) to class.`, answer:`late`, explanation:`late は「遅く(遅れて)」、lately は「最近」という意味です。ここでは「遅れて」の意味になります。` }));
-    addQ(21, "応用", "形容詞(感情)", () => ({ text:`（　）内から適する語を選びなさい。\n( The exciting / The excited ) game was over.`, answer:`The exciting`, explanation:`物(試合)は感情(興奮)を「与える」側なので現在分詞(exciting)が形容詞化したものを使います。` }));
-    addQ(21, "応用", "注意すべき副詞", () => ({ text:`（　）内から適切な語を選びなさい。\nI remember I met her ( ago, before ). I think it was three months ( ago, before ).`, answer:`before / ago`, explanation:`単独で「以前に」は before、期間(three months)＋「前に」は ago を使います。` }));
+    addQ(21, "基礎", "形容詞・副詞の位置", () => { 
+        return r([
+          { text:`（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\nHe is (a) a (b) speaker (c) of English. (good)`, answer:`(b)`, explanation:`名詞を修飾する形容詞(good)は、名詞(speaker)の直前に置きます(a good speaker)。` },
+          { text:`（　）に最も適する語を選んで入れなさい。\nMy aunt is very sick; there is (   ) hope of her recovery. [ many / much / a few / a little / few / little ]`, answer:`little`, explanation:`hope(希望)は数えられない名詞で、文脈から「ほとんど望みがない」という意味になるため little を使います。` },
+          { text:`（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\n(a) I (b) go to school (c) by bike. (usually)`, answer:`(b)`, explanation:`頻度を表す副詞(usually)は、一般動詞の前、be動詞/助動詞の後に置きます。` }
+        ]);
+    });
+    addQ(21, "標準", "数量形容詞・副詞", () => { 
+        return r([
+          { text:`（　）に最も適する語を選んで入れなさい。\nShe is happy that she made (   ) mistakes in the test. [ many / much / a few / a little / few / little ]`, answer:`few`, explanation:`可算名詞(mistakes)で「ほとんどミスをしなかった(肯定的な結果)」という文脈なので、否定的なニュアンスを持つ few です。` },
+          { text:`（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\n(a) The boy (b) was (c) to carry my bag. (kind enough)`, answer:`(c) [was kind enough]`, explanation:`形容詞/副詞 + enough の語順になるため kind enough となります。` },
+          { text:`（　）に適する語を入れ、対話を完成しなさい。\n" (   )(   ) is it from here to the city hall?" - "About 3 kilometers."`, answer:`How far`, explanation:`距離(3 kilometers)を尋ねているので How far です。` }
+        ]);
+    });
+    addQ(21, "応用", "注意すべき副詞・形容詞", () => { 
+        return r([
+          { text:`（　）内から適切な語を選びなさい。\nJohn often comes ( late, lately ) to class.`, answer:`late`, explanation:`late は「遅く(遅れて)」、lately は「最近」という意味です。ここでは「遅れて」の意味になります。` },
+          { text:`（　）内から適する語を選びなさい。\n( The exciting / The excited ) game was over.`, answer:`The exciting`, explanation:`物(試合)は感情(興奮)を「与える」側なので現在分詞(exciting)が形容詞化したものを使います。` },
+          { text:`（　）内から適切な語を選びなさい。\nI remember I met her ( ago, before ). I think it was three months ( ago, before ).`, answer:`before / ago`, explanation:`単独で「以前に」は before、期間(three months)＋「前に」は ago を使います。` }
+        ]);
+    });
 
     // 第22章 強調、否定
-    addQ(22, "基礎", "強調", () => ({ text:`It is(was) ~ that ... の構文を使って下線部を強調する文をつくりなさい。\nTom broke [the window] yesterday.`, answer:`It was the window that Tom broke yesterday.`, explanation:`It was ~ that ... の ~ の部分に強調したい語句(the window)を挟み込みます。` }));
-    addQ(22, "基礎", "動詞の強調", () => ({ text:`do, does, did を使って下線部の動詞を強調する文にしなさい。\nThe earth [moves].`, answer:`The earth does move.`, explanation:`動詞の前に do(does/did) を置き、動詞は原形にします。` }));
-    addQ(22, "基礎", "否定", () => ({ text:`日本語の意味を表すように（　）に適する語を入れなさい。\nHe (   ) tells a lie. (彼は決して嘘をつかない)`, answer:`never`, explanation:`強い否定を表す副詞 never を使います。not よりも強い否定です。` }));
-    addQ(22, "標準", "否定", () => ({ text:`（　）内の日本文を参考にして、英文を完成しなさい。\n(   ) (   ) the students were absent. （生徒全員が欠席したわけではなかった）`, answer:`Not all`, explanation:`Not all ~ で「すべてが〜というわけではない」という部分否定の表現になります。` }));
-    addQ(22, "標準", "部分否定", () => ({ text:`（　）内の日本文を参考にして、英文を完成しなさい。\nThe rich are (   )(   ) happy. (金持ちがいつも幸せとは限らない)`, answer:`not always`, explanation:`not always で「いつも〜とは限らない」という部分否定になります。` }));
-    addQ(22, "標準", "準否定", () => ({ text:`（　）内の日本文を参考にして、英文を完成しなさい。\nIt (   ) snows here in March. (ここは3月にはめったに雪が降らない)`, answer:`seldom [rarely]`, explanation:`seldom, rarely で「めったに〜ない」という準否定(頻度が非常に低いこと)を表します。` }));
-    addQ(22, "応用", "慣用表現", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n健康にはいくら注意してもしすぎることはありません。\nYou (   ) be (   ) careful of your health.`, answer:`cannot / too`, explanation:`cannot ~ too ... で「いくら…してもしすぎることはない」という頻出の慣用表現です。` }));
-    addQ(22, "応用", "二重否定・慣用表現", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私はこの映画を見ると必ず泣いてしまいます。\nI (   ) see this movie (   ) crying.`, answer:`never / without`, explanation:`never A without B (~ing) で「Aすれば必ずBする」という二重否定を用いた強い肯定の表現です。` }));
-    addQ(22, "応用", "慣用表現", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n彼がそんな嘘をつくとは、決してありそうにないことだ。\nHe would be the (   ) man to tell such a lie.`, answer:`last`, explanation:`the last man to V で「最もVしそうにない人（最後にVするような人）」という否定の意味を含みます。` }));
+    addQ(22, "基礎", "強調・否定の基本", () => { 
+        return r([
+          { text:`It is(was) ~ that ... の構文を使って下線部を強調する文をつくりなさい。\nTom broke [the window] yesterday.`, answer:`It was the window that Tom broke yesterday.`, explanation:`It was ~ that ... の ~ の部分に強調したい語句(the window)を挟み込みます。` },
+          { text:`do, does, did を使って下線部の動詞を強調する文にしなさい。\nThe earth [moves].`, answer:`The earth does move.`, explanation:`動詞の前に do(does/did) を置き、動詞は原形にします。` },
+          { text:`日本語の意味を表すように（　）に適する語を入れなさい。\nHe (   ) tells a lie. (彼は決して嘘をつかない)`, answer:`never`, explanation:`強い否定を表す副詞 never を使います。not よりも強い否定です。` }
+        ]);
+    });
+    addQ(22, "標準", "部分否定・準否定", () => { 
+        return r([
+          { text:`（　）内の日本文を参考にして、英文を完成しなさい。\n(   ) (   ) the students were absent. （生徒全員が欠席したわけではなかった）`, answer:`Not all`, explanation:`Not all ~ で「すべてが〜というわけではない」という部分否定の表現になります。` },
+          { text:`（　）内の日本文を参考にして、英文を完成しなさい。\nThe rich are (   )(   ) happy. (金持ちがいつも幸せとは限らない)`, answer:`not always`, explanation:`not always で「いつも〜とは限らない」という部分否定になります。` },
+          { text:`（　）内の日本文を参考にして、英文を完成しなさい。\nIt (   ) snows here in March. (ここは3月にはめったに雪が降らない)`, answer:`seldom [rarely]`, explanation:`seldom, rarely で「めったに〜ない」という準否定(頻度が非常に低いこと)を表します。` }
+        ]);
+    });
+    addQ(22, "応用", "否定の慣用表現", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n健康にはいくら注意してもしすぎることはありません。\nYou (   ) be (   ) careful of your health.`, answer:`cannot / too`, explanation:`cannot ~ too ... で「いくら…してもしすぎることはない」という頻出の慣用表現です。` },
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私はこの映画を見ると必ず泣いてしまいます。\nI (   ) see this movie (   ) crying.`, answer:`never / without`, explanation:`never A without B (~ing) で「Aすれば必ずBする」という二重否定を用いた強い肯定の表現です。` },
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n彼がそんな嘘をつくとは、決してありそうにないことだ。\nHe would be the (   ) man to tell such a lie.`, answer:`last`, explanation:`the last man to V で「最もVしそうにない人（最後にVするような人）」という否定の意味を含みます。` }
+        ]);
+    });
 
     // 第23章 前置詞
-    addQ(23, "基礎", "前置詞", () => ({ text:`（　）内から適切な語を選びなさい。\nI usually get up ( at / on / in ) seven ( at / on / in ) the morning.`, answer:`at / in`, explanation:`時刻の前には at を、午前・午後など特定の期間には in (in the morning) を使います。` }));
-    addQ(23, "基礎", "時・場所の前置詞", () => ({ text:`（　）内から適切な語を選びなさい。\nHe was born ( at / on / in ) August 25, 1965.`, answer:`on`, explanation:`特定の日・日付の前は on を使います。` }));
-    addQ(23, "基礎", "時・場所の前置詞", () => ({ text:`（　）内から適切な語を選びなさい。\nI stayed ( at, on, in ) a hotel ( at, in ) Osaka.`, answer:`at / in`, explanation:`比較的狭い場所・特定の地点(ホテルなど)は at、広い場所(都市など)は in を使います。` }));
-    addQ(23, "標準", "前置詞", () => ({ text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nお茶を飲みながらその問題について話しましょう。\nLet's talk about the matter (   ) a cup of tea.`, answer:`over`, explanation:`over a cup of tea で「お茶を飲みながら(〜越しに)」という意味の慣用表現です。` }));
-    addQ(23, "標準", "前置詞の使い分け", () => ({ text:`（　）に適する語を入れなさい。\nShe was found ( between, among ) the crowd(群衆).`, answer:`among`, explanation:`3つ(3人)以上の集団・間には among を使います(2つの間は between)。` }));
-    addQ(23, "標準", "付帯状況のwith", () => ({ text:`（　）内の語句を並べかえて英文を完成しなさい。\nShe was listening to music ( eyes / with / closed / her ).`, answer:`with her eyes closed`, explanation:`with O C (OをCした状態で)。目は閉じられる側なので過去分詞(closed)です。` }));
-    addQ(23, "応用", "代償の前置詞", () => ({ text:`（　）内から適する語を選びなさい。\nHe bought a new camera ( for / at / on / by ) twenty thousand yen.`, answer:`for`, explanation:`代償・交換（〜の金額で）を表す場合は、前置詞 for を使います。` }));
-    addQ(23, "応用", "群前置詞", () => ({ text:`（　）内から適する語を選び、○で囲みなさい。\nHe bought a new camera ( instead of / in time for / by way of / in spite of ) twenty thousand yen.`, answer:`instead of`, explanation:`instead of ~ (〜の代わりに) が文脈・文法的に合致します(ここはお金に代わって、の意味合い)。` }));
-    addQ(23, "応用", "動詞＋前置詞", () => ({ text:`（　）に適する語を入れなさい。\nThe accident prevented us (   ) arriving on time.`, answer:`from`, explanation:`prevent O from ~ing (Oが〜するのを妨げる) は前置詞 from を伴う重要イディオムです。` }));
+    addQ(23, "基礎", "時・場所の前置詞", () => { 
+        return r([
+          { text:`（　）内から適切な語を選びなさい。\nI usually get up ( at / on / in ) seven ( at / on / in ) the morning.`, answer:`at / in`, explanation:`時刻の前には at を、午前・午後など特定の期間には in (in the morning) を使います。` },
+          { text:`（　）内から適切な語を選びなさい。\nHe was born ( at / on / in ) August 25, 1965.`, answer:`on`, explanation:`特定の日・日付の前は on を使います。` },
+          { text:`（　）内から適切な語を選びなさい。\nI stayed ( at, on, in ) a hotel ( at, in ) Osaka.`, answer:`at / in`, explanation:`比較的狭い場所・特定の地点(ホテルなど)は at、広い場所(都市など)は in を使います。` }
+        ]);
+    });
+    addQ(23, "標準", "前置詞の使い分け", () => { 
+        return r([
+          { text:`日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nお茶を飲みながらその問題について話しましょう。\nLet's talk about the matter (   ) a cup of tea.`, answer:`over`, explanation:`over a cup of tea で「お茶を飲みながら(〜越しに)」という意味の慣用表現です。` },
+          { text:`（　）に適する語を入れなさい。\nShe was found ( between, among ) the crowd(群衆).`, answer:`among`, explanation:`3つ(3人)以上の集団・間には among を使います(2つの間は between)。` },
+          { text:`（　）内の語句を並べかえて英文を完成しなさい。\nShe was listening to music ( eyes / with / closed / her ).`, answer:`with her eyes closed`, explanation:`with O C (OをCした状態で)。目は閉じられる側なので過去分詞(closed)です。` }
+        ]);
+    });
+    addQ(23, "応用", "群前置詞など", () => { 
+        return r([
+          { text:`（　）内から適する語を選びなさい。\nHe bought a new camera ( for / at / on / by ) twenty thousand yen.`, answer:`for`, explanation:`代償・交換（〜の金額で）を表す場合は、前置詞 for を使います。` },
+          { text:`（　）内から適する語を選び、○で囲みなさい。\nHe bought a new camera ( instead of / in time for / by way of / in spite of ) twenty thousand yen.`, answer:`instead of`, explanation:`instead of ~ (〜の代わりに) が文脈・文法的に合致します(ここはお金に代わって、の意味合い)。` },
+          { text:`（　）に適する語を入れなさい。\nThe accident prevented us (   ) arriving on time.`, answer:`from`, explanation:`prevent O from ~ing (Oが〜するのを妨げる) は前置詞 from を伴う重要イディオムです。` }
+        ]);
+    });
 
 
+    // ==========================================
+    // React コンポーネント (アプリ本体)
+    // ==========================================
     function App() {
       const [activeTab, setActiveTab] = useState('test');
 
-      const [selectedChapters, setSelectedChapters] = useState([1, 2, 3]);
-      const [selectedDifficulties, setSelectedDifficulties] = useState(["基礎", "標準"]);
+      const [selectedChapters, setSelectedChapters] = useState([1]); // 初期状態を1章のみに
+      const [selectedDifficulties, setSelectedDifficulties] = useState(["基礎", "標準", "応用"]);
       const [numQuestions, setNumQuestions] = useState(10);
       const [testPaper, setTestPaper] = useState(null);
       const [targetStudentId, setTargetStudentId] = useState("");
@@ -398,6 +796,7 @@
         localStorage.setItem('leadEnglish_scores', JSON.stringify(scores));
       }, [scores]);
 
+      // --- テスト生成ロジック（バリエーション無限化・重複排除） ---
       const generateTest = () => {
         if (selectedChapters.length === 0 || selectedDifficulties.length === 0) {
           alert("出題範囲と難易度を1つ以上選択してください。");
@@ -413,23 +812,28 @@
           return;
         }
 
-        let actualNum = numQuestions;
-        if (availableTemplates.length < numQuestions) {
-          alert(`指定された条件では問題ストックが ${availableTemplates.length} パターンしかありません。重複を避けるため全 ${availableTemplates.length} 問のテストを生成します。`);
-          actualNum = availableTemplates.length;
+        let questions = [];
+        let maxAttempts = numQuestions * 50; // 無限ループ回避用のストッパー
+        let attempts = 0;
+        
+        // 要求された問題数に達するか、試行回数が上限に達するまで繰り返す
+        while (questions.length < numQuestions && attempts < maxAttempts) {
+          attempts++;
+          const template = r(availableTemplates); // ランダムにテンプレートを選択
+          const generated = template.generate();  // 内部でランダムな名前・内容が生成される
+
+          // 生成された「問題文のテキスト」が、既に選ばれた問題と完全に同じでなければ追加
+          if (!questions.some(q => q.text === generated.text)) {
+            questions.push({
+              ...generated,
+              chapter: template.chapter,
+              instruction: template.instruction
+            });
+          }
         }
 
-        const shuffled = [...availableTemplates].sort(() => Math.random() - 0.5);
-        let questions = [];
-        
-        for (let i = 0; i < actualNum; i++) {
-          const template = shuffled[i];
-          const generated = template.generate();
-          questions.push({
-            ...generated,
-            chapter: template.chapter,
-            instruction: template.instruction
-          });
+        if (questions.length < numQuestions) {
+          alert(`ランダム生成の組み合わせの限界により、${questions.length} 問のテストを生成しました。`);
         }
 
         const today = new Date();
@@ -447,6 +851,7 @@
         setActiveTab('test');
       };
 
+      // 初回ロード時に自動でテストを生成
       useEffect(() => {
         if(!testPaper) generateTest();
       }, []);
