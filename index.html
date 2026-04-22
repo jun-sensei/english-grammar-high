@@ -1,823 +1,761 @@
-import React, { useState, useEffect } from 'react';
-import { Printer, RefreshCw, Settings, BookOpen, Layers, Users, BarChart3, Plus, Trash2, Save, GraduationCap } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小テストジェネレーター</title>
+  
+  <!-- Tailwind CSS (デザイン用) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel (ブラウザ上でReactコードを変換するため) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-// --- ランダム語彙辞書 ---
-const dict = {
-  names_m: ["Tom", "Ken", "John", "Bob", "Mike", "David", "Jim", "Paul", "Kevin"],
-  names_f: ["Mary", "Yumi", "Lucy", "Jane", "Nancy", "Emma", "Lisa", "Ann", "Kate"],
-  cities: ["Tokyo", "London", "New York", "Paris", "Kyoto", "Canada", "Australia", "Hawaii", "Sydney", "Boston"],
-  time_past: ["yesterday", "last night", "last week", "two days ago", "this morning", "a few days ago"],
-  time_future: ["tomorrow", "next week", "soon", "this evening", "next year"],
-  items: ["a book", "a dictionary", "some flowers", "a watch", "a CD", "a new computer", "an umbrella", "a camera", "a bag", "a pen"],
-  subjects: ["math", "English", "science", "history", "music", "art"],
-  adjectives: ["beautiful", "interesting", "difficult", "easy", "important", "popular"],
-  sports: ["tennis", "soccer", "baseball", "basketball", "volleyball"],
-};
-
-const r = (array) => array[Math.floor(Math.random() * array.length)];
-const rName = () => r([...dict.names_m, ...dict.names_f]);
-
-// --- 出題範囲（全23章） ---
-const availableChapters = [
-  { id: 1, title: "第1章 文型" }, { id: 2, title: "第2章 文の種類" }, { id: 3, title: "第3章 基本時制" },
-  { id: 4, title: "第4章 完了形" }, { id: 5, title: "第5章 助動詞" }, { id: 6, title: "第6章 受動態" },
-  { id: 7, title: "第7章 不定詞" }, { id: 8, title: "第8章 動名詞" }, { id: 9, title: "第9章 分詞" },
-  { id: 10, title: "第10章 使役動詞、知覚動詞" }, { id: 11, title: "第11章 分詞構文" }, { id: 12, title: "第12章 関係代名詞" },
-  { id: 13, title: "第13章 関係副詞" }, { id: 14, title: "第14章 比較" }, { id: 15, title: "第15章 仮定法" },
-  { id: 16, title: "第16章 接続詞、間接疑問文" }, { id: 17, title: "第17章 句と節" }, { id: 18, title: "第18章 話法" },
-  { id: 19, title: "第19章 名詞、冠詞" }, { id: 20, title: "第20章 代名詞" }, { id: 21, title: "第21章 形容詞、副詞" },
-  { id: 22, title: "第22章 強調、否定" }, { id: 23, title: "第23章 前置詞" },
-];
-
-const difficulties = ["基礎", "標準", "応用"];
-
-// --- 問題データベース（バリエーション大幅拡充） ---
-const questionBank = [
-  // 1章 文型
-  { chapter: 1, difficulty: "基礎", generate: () => { 
-      const n = rName(); const s = r(dict.sports);
-      return r([
-        { instruction: "文型", text: `次の英文の S, V, C を下線を引いて指摘しなさい。\n${n} is a student.`, answer: `S: ${n}, V: is, C: a student` },
-        { instruction: "文型", text: `次の英文の S, V を下線を引いて指摘しなさい。\nThe dog runs fast.`, answer: `S: The dog, V: runs` },
-        { instruction: "文型", text: `次の英文の S, V, O を下線を引いて指摘しなさい。\n${n} likes playing ${s}.`, answer: `S: ${n}, V: likes, O: playing ${s}` }
-      ]);
-  }},
-  { chapter: 1, difficulty: "標準", generate: () => { 
-      const n = rName(); const i = r(dict.items);
-      return r([
-        { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\n${n} gave me ${i}.\n= ${n} gave ${i} (   ) me.`, answer: `to` },
-        { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nMy mother bought me a new dress.\n= My mother bought a new dress (   ) me.`, answer: `for` },
-        { instruction: "和訳", text: `次の英文を日本語になおしなさい。\nWe call the girl ${n}.`, answer: `私たちはその少女を${n}と呼びます。` }
-      ]);
-  }},
-  { chapter: 1, difficulty: "応用", generate: () => { 
-      return r([
-        { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n太陽は私たちに光と熱を与えてくれます。\n( gives / and / sun / heat / light / us / the / . )`, answer: `The sun gives us light and heat.` },
-        { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nこの辞書を私に貸してくれませんか。\n( lend / this dictionary / me / will / you / ? )`, answer: `Will you lend me this dictionary?` }
-      ]);
-  }},
-
-  // 2章 文の種類
-  { chapter: 2, difficulty: "基礎", generate: () => { 
-      const n = rName(); const c = r(dict.cities);
-      return r([
-        { instruction: "否定文", text: `次の各文を否定文に書きかえなさい。\n${n} is from ${c}.`, answer: `${n} is not [isn't] from ${c}.` },
-        { instruction: "疑問文", text: `次の各文を疑問文に書きかえなさい。\n${n} lives in this town.`, answer: `Does ${n} live in this town?` },
-        { instruction: "否定文", text: `次の各文を否定文に書きかえなさい。\nI went to the concert.`, answer: `I did not [didn't] go to the concert.` }
-      ]);
-  }},
-  { chapter: 2, difficulty: "標準", generate: () => { 
-      const isMale = Math.random() > 0.5;
-      const n = isMale ? r(dict.names_m) : r(dict.names_f);
-      const pronoun = isMale ? "he" : "she";
-      return r([
-        { instruction: "付加疑問文", text: `次の文の（　）に適する語を入れて、付加疑問文を完成しなさい。\n${n} isn't a student, (   ) (   )?`, answer: `is ${pronoun}` },
-        { instruction: "感嘆文", text: `次の文の（　）に適する語を入れて、感嘆文を完成しなさい。\n(   ) beautiful this flower is!`, answer: `How` },
-        { instruction: "命令文", text: `次の日本文の意味を表す英文を完成しなさい。\nドアを開けっぱなしにしてはいけません。\n(   ) leave the door open.`, answer: `Don't` }
-      ]);
-  }},
-  { chapter: 2, difficulty: "応用", generate: () => { 
-      const c = r(dict.cities);
-      return r([
-        { instruction: "誤文訂正", text: `次の英文の誤りの部分に下線を引いて、正しい表現を書きなさい。\nHow do you think of our new teacher?`, answer: `How -> What` },
-        { instruction: "誤文訂正", text: `次の英文の誤りの部分に下線を引いて、正しい表現を書きなさい。\nWhere is the capital of ${c}?`, answer: `Where -> What` }
-      ]);
-  }},
-
-  // 3章 基本時制
-  { chapter: 3, difficulty: "基礎", generate: () => {
-      const n = rName();
-      return r([
-        { instruction: "時制", text: `次の各文を will を使って未来の文に書きかえなさい。\nIt rains.`, answer: `It will rain.` },
-        { instruction: "時制", text: `次の各文を（　）内の指示に従って書きかえなさい。\n${n} uses this computer. （否定文に）`, answer: `${n} does not [doesn't] use this computer.` },
-        { instruction: "時制", text: `次の各文の（　）内の動詞を適する形になおしなさい。\nI ( be ) not at home last night.`, answer: `was` }
-      ]);
-  }},
-  { chapter: 3, difficulty: "標準", generate: () => {
-      const n = rName();
-      return r([
-        { instruction: "進行形", text: `次の各文を進行形の文になおしなさい。\nThe dog lies under the table.`, answer: `The dog is lying under the table.` },
-        { instruction: "助動詞", text: `（　）内の日本語を参考にして、（　）に will または shall を入れなさい。\n(   ) we climb the mountain next month? （〜しましょうか）`, answer: `Shall` },
-        { instruction: "時制の一致", text: `次の文の下線部の動詞を過去形にして、文全体を書きかえなさい。\nI think that ${n} can speak English.`, answer: `I thought that ${n} could speak English.` }
-      ]);
-  }},
-  { chapter: 3, difficulty: "応用", generate: () => { 
-      const n = rName(); 
-      return r([
-        { instruction: "並べかえ", text: `次の各文の（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n( arriving / is / seven / ${n} / at ) this evening.`, answer: `${n} is arriving at seven this evening.` },
-        { instruction: "英訳", text: `次の日本文を英文になおしなさい。\n私たちは雨がやんだら、出発するつもりです。`, answer: `We will start when it stops raining.` }
-      ]);
-  }},
-
-  // 4章 完了形
-  { chapter: 4, difficulty: "基礎", generate: () => { 
-      const t = r(dict.time_past); const c = r(dict.cities);
-      return r([
-        { instruction: "完了形", text: `次の各組の文の（　）内の語句を加えて現在完了の文にしなさい。\nIt is cold. ( since ${t} )`, answer: `It has been cold since ${t}.` },
-        { instruction: "完了形", text: `日本文を参考にして、（　）に適する語を下から選んで入れなさい。\nShe has (   ) been to ${c}. （行ったことは一度もない）\n[ ever, never, for, yet, already, just, since ]`, answer: `never` }
-      ]);
-  }},
-  { chapter: 4, difficulty: "標準", generate: () => { 
-      const n = rName();
-      return r([
-        { instruction: "完了形", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私は先月以来ずっと${n}を見かけていません。\nI (   )(   ) ${n} (   ) last month.`, answer: `have not seen [haven't seen] / since` },
-        { instruction: "完了進行形", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n昨日から雨が降ったりやんだりしています。\nIt (   )(   )(   ) on and off since yesterday.`, answer: `has been raining` }
-      ]);
-  }},
-  { chapter: 4, difficulty: "応用", generate: () => { 
-      return r([
-        { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。ただし、１語不要な語があります。\n私はこれほどすばらしい映画を今まで見たことがありません。\n( I / never / have / such / movie / seen / fantastic / a / . )`, answer: `I have never seen such a fantastic movie.` },
-        { instruction: "英訳", text: `次の日本文を英文になおしなさい。\n昨日図書館から借りてきた本を、私はちょうど読み終えたところです。`, answer: `I have just finished reading the book I borrowed from the library yesterday.` }
-      ]);
-  }},
-
-  // 5章 助動詞
-  { chapter: 5, difficulty: "基礎", generate: () => { 
-      const n = rName();
-      return r([
-        { instruction: "助動詞", text: `次の各文の（　）内から最も適する語を選びなさい。\nMy sister can ( play / plays / playing ) the piano very well.`, answer: `play` },
-        { instruction: "助動詞", text: `次の各文の（　）内から最も適する語を選びなさい。\n${n} ( may / can / must ) wash your hands before dinner.`, answer: `must` }
-      ]);
-  }},
-  { chapter: 5, difficulty: "標準", generate: () => { 
-      const n = rName();
-      return r([
-        { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt is not necessary for you to come here tomorrow.\nYou (   )(   ) come here tomorrow.`, answer: `don't have to` },
-        { instruction: "助動詞", text: `次の文の（　）に would または should を入れなさい。\nHe promised he (   ) finish the work by Friday.`, answer: `would` }
-      ]);
-  }},
-  { chapter: 5, difficulty: "応用", generate: () => { 
-      const n = rName();
-      return r([
-        { instruction: "並べかえ", text: `次の各文の（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n遅れたのは君の責任だ。( better / go / not / had / out / you ) now.`, answer: `You had better not go out now.` },
-        { instruction: "助動詞＋完了形", text: `次の各文の（　）内の日本語を参考にして、（　）に適する語を入れなさい。\n${n} (   )(   )(   ) such a thing. （そんなことをすべきでなかったのに）`, answer: `should not have done [ought not to have done]` }
-      ]);
-  }},
-
-  // 6章 受動態
-  { chapter: 6, difficulty: "基礎", generate: () => { 
-      const n = rName(); const i = r(dict.items);
-      return r([
-        { instruction: "受動態", text: `次の各文を受動態の文に書きかえなさい。\n${n} uses this ${i.split(' ')[1]}.`, answer: `This ${i.split(' ')[1]} is used by ${n}.` },
-        { instruction: "受動態", text: `次の各文を受動態の文に書きかえなさい。\nThey built this house about one hundred years ago.`, answer: `This house was built about one hundred years ago.` }
-      ]);
-  }},
-  { chapter: 6, difficulty: "標準", generate: () => { 
-      return r([
-        { instruction: "受動態", text: `次の文の（　）に適する語を下から選んで入れなさい。\nThis desk is made (   ) wood. [ from, of, with, to ]`, answer: `of` },
-        { instruction: "群動詞の受動態", text: `次の各文を受動態の文に書きかえなさい。\nMany people listened to his speech.`, answer: `His speech was listened to by many people.` }
-      ]);
-  }},
-  { chapter: 6, difficulty: "応用", generate: () => { 
-      return r([
-        { instruction: "書き換え", text: `次の各文を（　）内の指示に従って書きかえなさい。\nHe told them to do the work. （SVO+to不定詞の受動態に）`, answer: `They were told to do the work by him.` },
-        { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nその山の頂上は1年中雪で覆われています。\nThe top of the mountain is ( snow / all / year / covered / round / with / . )`, answer: `The top of the mountain is covered with snow all year round.` }
-      ]);
-  }},
-
-  // 7章 不定詞
-  { chapter: 7, difficulty: "基礎", generate: () => { 
-      const t = r(dict.time_future); const c = r(dict.cities);
-      return r([
-        { instruction: "和訳", text: `次の英文を日本語になおしなさい。\nI want you to finish the work by ${t}.`, answer: `私はあなたに${t}までにその仕事を終わらせてほしい。` },
-        { instruction: "不定詞", text: `次の各文の（　）内の日本語を参考にして、（　）に適する語を入れなさい。\nI (   ) (   ) eat steak. （ステーキを食べたい）`, answer: `want to` }
-      ]);
-  }},
-  { chapter: 7, difficulty: "標準", generate: () => { 
-      const n = rName();
-      return r([
-        { instruction: "並べかえ", text: `次の各文の（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n${n} ( do / things / to / a lot of / has ) today.`, answer: `${n} has a lot of things to do today.` },
-        { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nThe car is so expensive that I can't buy it.\nThe car is (   ) expensive (   ) me (   ) buy.`, answer: `too / for / to` }
-      ]);
-  }},
-  { chapter: 7, difficulty: "応用", generate: () => { 
-      return r([
-        { instruction: "形式主語", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n計画を立てるのは簡単だが、それを実行するのは難しい。\n(   ) is easy to make a plan, but difficult to carry it out.`, answer: `It` },
-        { instruction: "完了不定詞", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that he knows something about the accident.\nHe seems (   ) (   ) something about the accident.`, answer: `to know` }
-      ]);
-  }},
-
-  // 8章 動名詞
-  { chapter: 8, difficulty: "基礎", generate: () => { 
-      const s = r(dict.sports);
-      return r([
-        { instruction: "動名詞", text: `次の文の（　）内の語を適する形になおしなさい。\nHis hobby is ( watch ) stars.`, answer: `watching` },
-        { instruction: "動名詞", text: `次の各文の（　）内の語を適する形になおしなさい。\nShe is good at ( play ) the flute.`, answer: `playing` }
-      ]);
-  }},
-  { chapter: 8, difficulty: "標準", generate: () => { 
-      const n = rName();
-      return r([
-        { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nShe enjoyed playing tennis with ${n}.\nShe enjoyed (   ) with ${n}.`, answer: `playing tennis` },
-        { instruction: "動名詞と不定詞", text: `次の各組の英文の意味の違いに注意して、日本文になおしなさい。\n① She stopped looking at the stars.\n② She stopped to look at the stars.`, answer: `①彼女は星を見るのをやめた。\n②彼女は星を見るために立ち止まった。` }
-      ]);
-  }},
-  { chapter: 8, difficulty: "応用", generate: () => { 
-      return r([
-        { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nこれ以上議論してもむだです。\nIt is (   )(   ) arguing any more.`, answer: `no use [good]` },
-        { instruction: "意味上の主語", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nHe is proud that he has an expensive car.\nHe is proud (   )(   ) an expensive car.`, answer: `of having` }
-      ]);
-  }},
-
-  // 9章〜23章もランダム性を高めるため、複数の選択肢を r() で返すように設定。
-  // ここでは省略表記を避け、しっかり定義します。
-  { chapter: 9, difficulty: "基礎", generate: () => r([
-    { instruction: "分詞", text: `次の各文の（　）内から適する語を選びなさい。\nLook at the baby ( sleeping / slept ) in the bed.`, answer: `sleeping` },
-    { instruction: "分詞", text: `次の各文の（　）内の語を適する形になおしなさい。\nThe girl ( sing ) on the stage is a famous TV personality.`, answer: `singing` }
-  ])},
-  { chapter: 9, difficulty: "標準", generate: () => r([
-    { instruction: "SVC", text: `次の各文の（　）内の語を適する形になおしなさい。\nHe sat ( read ) a book.`, answer: `reading` },
-    { instruction: "SVOC", text: `次の各文の（　）内の語を適する分詞になおしなさい。\nI heard Jane ( sing ) a song in the music room.`, answer: `singing` }
-  ])},
-  { chapter: 9, difficulty: "応用", generate: () => r([
-    { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nこれはおじが私にくれたギターです。\nThis is ( given / me / by / to / the guitar ) my uncle.`, answer: `the guitar given to me by` },
-    { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n彼女はかばんを2階に運んでもらいました。\nShe had her bag ( carried / upstairs ).`, answer: `carried upstairs` }
-  ])},
-
-  { chapter: 10, difficulty: "基礎", generate: () => r([
-    { instruction: "使役動詞", text: `次の英文を日本文になおしなさい。\nThe teacher made the boys stand up.`, answer: `先生はその男の子たちを立たせた。` },
-    { instruction: "使役動詞", text: `次の文の（　）内の語を適する形になおしなさい。\nI had Helen ( help ) me with my homework.`, answer: `help` }
-  ])},
-  { chapter: 10, difficulty: "標準", generate: () => r([
-    { instruction: "知覚動詞", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n私は彼がそう言うのを聞きました。\nI ( him / say / heard ) so.`, answer: `heard him say` },
-    { instruction: "知覚動詞", text: `次の（　）内の語句を並べかえて、意味の通る文を完成しなさい。\nI saw ( fall / the woman ) down.`, answer: `the woman fall` }
-  ])},
-  { chapter: 10, difficulty: "応用", generate: () => r([
-    { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nあなたはサルがバナナを食べるのをじっと見ていたのですか。\nWere you ( a monkey / a banana / watching / eat )?`, answer: `watching a monkey eat a banana` }
-  ])},
-
-  { chapter: 11, difficulty: "基礎", generate: () => r([
-    { instruction: "分詞構文", text: `次の各文を分詞構文を使った文に書きかえなさい。\nWhen I entered the room, I found her sleeping.`, answer: `Entering the room, I found her sleeping.` },
-    { instruction: "分詞構文", text: `次の各文を分詞構文を使った文に書きかえなさい。\nAs I had no money with me, I couldn't buy the book.`, answer: `Having no money with me, I couldn't buy the book.` }
-  ])},
-  { chapter: 11, difficulty: "標準", generate: () => r([
-    { instruction: "完了形・否定形", text: `次の各文を分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs she did not want to make him angry, she didn't say any more.\n(   )(   )(   ) make him angry, she didn't say any more.`, answer: `Not wanting to` }
-  ])},
-  { chapter: 11, difficulty: "応用", generate: () => r([
-    { instruction: "独立分詞構文", text: `次の各文を分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs it was very hot, we went swimming.\n(   )(   ) very hot, we went swimming.`, answer: `It being` }
-  ])},
-
-  { chapter: 12, difficulty: "基礎", generate: () => r([
-    { instruction: "関係代名詞", text: `次の文の（　）に who, whose, whom のいずれかを入れなさい。\nThe boy (   ) is playing soccer is Jim.`, answer: `who` },
-    { instruction: "関係代名詞", text: `次の文の（　）に which, whose のいずれかを入れなさい。\nLook at the house (   ) roof is red.`, answer: `whose` }
-  ])},
-  { chapter: 12, difficulty: "標準", generate: () => r([
-    { instruction: "関係代名詞 what", text: `次の各文の（　）内から適する語を選びなさい。\n( Which, What, Who ) he said cannot be true.`, answer: `What` }
-  ])},
-  { chapter: 12, difficulty: "応用", generate: () => r([
-    { instruction: "非制限用法", text: `次の各組の英文の意味の違いに注意して、日本文になおしなさい。\n① He has three sons who work in the same factory.\n② He has three sons, who work in the same factory.`, answer: `①彼には同じ工場で働く3人の息子がいる。\n②彼には3人の息子がいて、(その3人は)同じ工場で働いている。` }
-  ])},
-
-  { chapter: 13, difficulty: "基礎", generate: () => r([
-    { instruction: "関係副詞", text: `次の文に（　）に適する関係副詞を入れなさい。\nThis is the village (   ) the well-known cook lives.`, answer: `where` }
-  ])},
-  { chapter: 13, difficulty: "標準", generate: () => r([
-    { instruction: "関係副詞", text: `次の2つの文を関係副詞を使って1つの文にしなさい。\nThat is the place. The accident happened there.`, answer: `That is the place where the accident happened.` }
-  ])},
-  { chapter: 13, difficulty: "応用", generate: () => r([
-    { instruction: "非制限用法", text: `次の各組の文が同じ内容になるように、（　）に適する語を入れなさい。\nI visited Kobe, and there I met an old friend of mine.\nI visited Kobe, (   ) I met an old friend of mine.`, answer: `where` }
-  ])},
-
-  { chapter: 14, difficulty: "基礎", generate: () => r([
-    { instruction: "比較", text: `次の語の比較級と最上級を書きなさい。\nbusy`, answer: `busier - busiest` },
-    { instruction: "原級", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n久美は私の妹と同じ年齢です。\nKumi is (   )(   )(   ) my sister.`, answer: `as old as` }
-  ])},
-  { chapter: 14, difficulty: "標準", generate: () => r([
-    { instruction: "比較", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n琵琶湖はこの湖の約3倍の大きさです。\nLake Biwa is about (   )(   )(   )(   ) this lake.`, answer: `three times as large as` }
-  ])},
-  { chapter: 14, difficulty: "応用", generate: () => r([
-    { instruction: "比較", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nNo one in our school plays tennis better than Mary.\nMary is the (   ) tennis player in our school.`, answer: `best` }
-  ])},
-
-  { chapter: 15, difficulty: "基礎", generate: () => r([
-    { instruction: "仮定法", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし私に翼があったら、君のところに飛んで行けるのに。\nIf I (   ) wings, I could fly to you.`, answer: `had` }
-  ])},
-  { chapter: 15, difficulty: "標準", generate: () => r([
-    { instruction: "仮定法過去完了", text: `次の各文を仮定法の文に書きかえるとき、（　）に適する語を入れなさい。\nAs I was so tired, I didn't play tennis.\nIf I (   )(   ) so tired, I (   )(   ) tennis.`, answer: `had not been / would have played` }
-  ])},
-  { chapter: 15, difficulty: "応用", generate: () => r([
-    { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし水がなかったら、どんな生物も生きていけないだろう。\n(   ) it (   )(   )(   ) water, no living things could exist.`, answer: `If / were not for` }
-  ])},
-
-  { chapter: 16, difficulty: "基礎", generate: () => r([
-    { instruction: "接続詞", text: `次の各文の（　）に and, but, or, for, so のいずれかを入れなさい。\nIt was raining hard, (   ) we decided not to go.`, answer: `so` }
-  ])},
-  { chapter: 16, difficulty: "標準", generate: () => r([
-    { instruction: "間接疑問文", text: `次の2つの文をそれぞれの書き出しに続けて、間接疑問文にしなさい。\nWhere did she go yesterday? / Do you know?\n-> Do you know (   ) (   ) (   ) yesterday?`, answer: `where she went` }
-  ])},
-  { chapter: 16, difficulty: "応用", generate: () => r([
-    { instruction: "接続詞", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIf you start at once, you won't be late.\nStart at once, (   ) you will be (   ) time.`, answer: `and / in` }
-  ])},
-
-  { chapter: 17, difficulty: "基礎", generate: () => r([
-    { instruction: "句と節", text: `次の文の下線部が名詞句ならA、形容詞句ならB、副詞句ならCを書きなさい。\nJim likes [listening to music].`, answer: `A` }
-  ])},
-  { chapter: 17, difficulty: "標準", generate: () => r([
-    { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that Jane is fond of Japanese food.\nJane seems (   )(   ) fond of Japanese food.`, answer: `to be` }
-  ])},
-  { chapter: 17, difficulty: "応用", generate: () => r([
-    { instruction: "無生物主語", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nWhy did you come here?\n(   )(   ) you here?`, answer: `What brought` }
-  ])},
-
-  { chapter: 18, difficulty: "基礎", generate: () => r([
-    { instruction: "時制の一致", text: `次の各文の（　）内から適する語を選びなさい。\nI thought that it ( will, would ) rain the next morning.`, answer: `would` }
-  ])},
-  { chapter: 18, difficulty: "標準", generate: () => r([
-    { instruction: "話法", text: `次の各文を間接話法の文に書きかえなさい。\nHe said to me, "I'm hungry."`, answer: `He told me that he was hungry.` }
-  ])},
-  { chapter: 18, difficulty: "応用", generate: () => r([
-    { instruction: "話法", text: `次の各文を間接話法の文に書きかえるとき、（　）に適する語を入れなさい。\nHe said to me, "Do it at once."\nHe (   ) me (   ) do it at once.`, answer: `told / to` }
-  ])},
-
-  { chapter: 19, difficulty: "基礎", generate: () => r([
-    { instruction: "名詞・冠詞", text: `次の（　）に a または an を入れなさい。\n(   ) useful animal / (   ) umbrella / (   ) year`, answer: `a / an / a` }
-  ])},
-  { chapter: 19, difficulty: "標準", generate: () => r([
-    { instruction: "名詞", text: `次の各文の（　）内の語を適する形になおしなさい。\nHow many ( knife ) are there on the plate?`, answer: `knives` }
-  ])},
-  { chapter: 19, difficulty: "応用", generate: () => r([
-    { instruction: "冠詞の省略", text: `次の各文の下線部の冠詞が必要なものには○、不要なものには×を書きなさい。\nChildren start [the] school at the age of six in this country.`, answer: `×` }
-  ])},
-
-  { chapter: 20, difficulty: "基礎", generate: () => r([
-    { instruction: "代名詞", text: `次の各文の（　）内から適する語を選びなさい。\n( Each, Both ) of my parents are alive.`, answer: `Both` }
-  ])},
-  { chapter: 20, difficulty: "標準", generate: () => r([
-    { instruction: "代名詞", text: `次の各文の（　）内から適する語を選びなさい。\nThe climate here is milder than ( that / those ) of Kyoto.`, answer: `that` }
-  ])},
-  { chapter: 20, difficulty: "応用", generate: () => r([
-    { instruction: "代名詞", text: `次の各文の（　）に適する語を入れなさい。\nSome come to school by bike, and (   ) on foot.`, answer: `others` }
-  ])},
-
-  { chapter: 21, difficulty: "基礎", generate: () => r([
-    { instruction: "形容詞・副詞", text: `次の文の（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\nHe is (a) a (b) speaker (c) of English. (good)`, answer: `(b)` }
-  ])},
-  { chapter: 21, difficulty: "標準", generate: () => r([
-    { instruction: "数量形容詞", text: `次の各文の（　）に最も適する語を選んで入れなさい。同じ語を2度使ってもかまいません。\nMy aunt is very sick; there is (   ) hope of her recovery. [ many / much / a few / a little / few / little ]`, answer: `little` }
-  ])},
-  { chapter: 21, difficulty: "応用", generate: () => r([
-    { instruction: "注意すべき副詞", text: `次の各文の（　）内から適切な語を選びなさい。\nJohn often comes ( late, lately ) to class.`, answer: `late` }
-  ])},
-
-  { chapter: 22, difficulty: "基礎", generate: () => r([
-    { instruction: "強調", text: `次の各文を、It is(was) ~ that ... の構文を使って下線部を強調する文をつくりなさい。\nTom broke [the window] yesterday.`, answer: `It was the window that Tom broke yesterday.` }
-  ])},
-  { chapter: 22, difficulty: "標準", generate: () => r([
-    { instruction: "否定", text: `次の各文の（　）内の日本文を参考にして、英文を完成しなさい。\n(   ) (   ) the students were absent. （生徒全員が欠席したわけではなかった）`, answer: `Not all` }
-  ])},
-  { chapter: 22, difficulty: "応用", generate: () => r([
-    { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n健康にはいくら注意してもしすぎることはありません。\nYou (   ) be (   ) careful of your health.`, answer: `cannot / too` }
-  ])},
-
-  { chapter: 23, difficulty: "基礎", generate: () => r([
-    { instruction: "前置詞", text: `次の文の（　）内から適切な語を選びなさい。\nI usually get up ( at / on / in ) seven ( at / on / in ) the morning.`, answer: `at / in` }
-  ])},
-  { chapter: 23, difficulty: "標準", generate: () => r([
-    { instruction: "前置詞", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nお茶を飲みながらその問題について話しましょう。\nLet's talk about the matter (   ) a cup of tea.`, answer: `over` }
-  ])},
-  { chapter: 23, difficulty: "応用", generate: () => r([
-    { instruction: "群前置詞", text: `次の各文の（　）内から適する語を選び、○で囲みなさい。\nHe bought a new camera ( instead of / in time for / by way of / in spite of ) twenty thousand yen.`, answer: `instead of` }
-  ])},
-];
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState('test'); // 'test' | 'manage' | 'scores'
-
-  // --- State: テスト生成 ---
-  const [selectedChapters, setSelectedChapters] = useState([1, 2, 3]);
-  const [selectedDifficulties, setSelectedDifficulties] = useState(["基礎", "標準"]);
-  const [numQuestions, setNumQuestions] = useState(10);
-  const [testPaper, setTestPaper] = useState(null);
-  const [targetStudentId, setTargetStudentId] = useState("");
-  const [grading, setGrading] = useState({}); // { [questionIndex]: boolean }
-  const [showAnswers, setShowAnswers] = useState(false); 
-
-  // --- State: 生徒・成績データ (localStorage保存用) ---
-  const [students, setStudents] = useState([]);
-  const [scores, setScores] = useState({}); 
-
-  // --- State: 成績管理用 ---
-  const [scoreViewStudentId, setScoreViewStudentId] = useState("");
-  const [newStudentName, setNewStudentName] = useState("");
-
-  // 初期ロード
-  useEffect(() => {
-    const savedStudents = localStorage.getItem('leadEnglish_students');
-    const savedScores = localStorage.getItem('leadEnglish_scores');
-    if (savedStudents) setStudents(JSON.parse(savedStudents));
-    if (savedScores) setScores(JSON.parse(savedScores));
-  }, []);
-
-  // 保存
-  useEffect(() => {
-    localStorage.setItem('leadEnglish_students', JSON.stringify(students));
-  }, [students]);
-
-  useEffect(() => {
-    localStorage.setItem('leadEnglish_scores', JSON.stringify(scores));
-  }, [scores]);
-
-
-  // --- テスト生成ロジック ---
-  const generateTest = () => {
-    if (selectedChapters.length === 0 || selectedDifficulties.length === 0) {
-      alert("出題範囲と難易度を1つ以上選択してください。");
-      return;
+  <style>
+    /* 印刷時のレイアウト設定 */
+    @media print {
+      @page { size: A4 portrait; margin: 15mm; }
+      body { background-color: white !important; -webkit-print-color-adjust: exact; color-adjust: exact; }
+      .custom-scrollbar::-webkit-scrollbar { display: none; }
     }
+    /* スクロールバーの装飾 */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div id="root"></div>
 
-    const availableTemplates = questionBank.filter(q => 
-      selectedChapters.includes(q.chapter) && selectedDifficulties.includes(q.difficulty)
-    );
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-    if (availableTemplates.length === 0) {
-      alert("選択された条件に一致する問題データがありません。条件を広げてみてください。");
-      return;
-    }
+    // --- アイコンコンポーネント (外部ライブラリ不要にするための自作SVG) ---
+    const IconBook = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+    const IconRefresh = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
+    const IconUsers = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+    const IconChart = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 3v18h18"/><rect x="7" y="14" width="4" height="5"/><rect x="13" y="9" width="4" height="10"/></svg>;
+    const IconSettings = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+    const IconPrinter = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>;
+    const IconPlus = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+    const IconTrash = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>;
+    const IconSave = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
+    const IconGraduation = ({size=18, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
 
-    let questions = [];
-    
-    // 要求された章と難易度の組み合わせから問題を生成（重複排除ロジック入り）
-    for (let i = 0; i < numQuestions; i++) {
-      let generated;
-      let retries = 0;
-      let template;
-      
-      do {
-        template = r(availableTemplates);
-        generated = template.generate();
-        retries++;
-      // 同じ文章の問題がすでに追加されていれば再抽選（最大20回）
-      } while (questions.some(q => q.text === generated.text) && retries < 20);
+    // --- ランダム語彙辞書 ---
+    const dict = {
+      names_m: ["Tom", "Ken", "John", "Bob", "Mike", "David", "Jim", "Paul", "Kevin"],
+      names_f: ["Mary", "Yumi", "Lucy", "Jane", "Nancy", "Emma", "Lisa", "Ann", "Kate"],
+      cities: ["Tokyo", "London", "New York", "Paris", "Kyoto", "Canada", "Australia", "Hawaii", "Sydney", "Boston"],
+      time_past: ["yesterday", "last night", "last week", "two days ago", "this morning", "a few days ago"],
+      time_future: ["tomorrow", "next week", "soon", "this evening", "next year"],
+      items: ["a book", "a dictionary", "some flowers", "a watch", "a CD", "a new computer", "an umbrella", "a camera", "a bag", "a pen"],
+      subjects: ["math", "English", "science", "history", "music", "art"],
+      adjectives: ["beautiful", "interesting", "difficult", "easy", "important", "popular"],
+      sports: ["tennis", "soccer", "baseball", "basketball", "volleyball"],
+    };
 
-      questions.push({
-        ...generated,
-        chapter: template.chapter // 採点記録用に章IDを付与
-      });
-    }
+    const r = (array) => array[Math.floor(Math.random() * array.length)];
+    const rName = () => r([...dict.names_m, ...dict.names_f]);
 
-    const today = new Date();
-    const targetStudent = students.find(s => s.id === targetStudentId);
+    // --- 出題範囲（全23章） ---
+    const availableChapters = [
+      { id: 1, title: "第1章 文型" }, { id: 2, title: "第2章 文の種類" }, { id: 3, title: "第3章 基本時制" },
+      { id: 4, title: "第4章 完了形" }, { id: 5, title: "第5章 助動詞" }, { id: 6, title: "第6章 受動態" },
+      { id: 7, title: "第7章 不定詞" }, { id: 8, title: "第8章 動名詞" }, { id: 9, title: "第9章 分詞" },
+      { id: 10, title: "第10章 使役動詞、知覚動詞" }, { id: 11, title: "第11章 分詞構文" }, { id: 12, title: "第12章 関係代名詞" },
+      { id: 13, title: "第13章 関係副詞" }, { id: 14, title: "第14章 比較" }, { id: 15, title: "第15章 仮定法" },
+      { id: 16, title: "第16章 接続詞、間接疑問文" }, { id: 17, title: "第17章 句と節" }, { id: 18, title: "第18章 話法" },
+      { id: 19, title: "第19章 名詞、冠詞" }, { id: 20, title: "第20章 代名詞" }, { id: 21, title: "第21章 形容詞、副詞" },
+      { id: 22, title: "第22章 強調、否定" }, { id: 23, title: "第23章 前置詞" },
+    ];
 
-    setTestPaper({
-      date: `${today.getFullYear()}年 ${today.getMonth() + 1}月 ${today.getDate()}日`,
-      studentId: targetStudentId,
-      studentName: targetStudent ? targetStudent.name : "",
-      questions: questions,
-      chapters: selectedChapters
-    });
-    
-    setGrading({}); // 採点状況をリセット
-    setActiveTab('test');
-  };
+    const difficulties = ["基礎", "標準", "応用"];
 
-  // 初回のみ自動生成
-  useEffect(() => {
-    if(!testPaper) generateTest();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // --- 問題データベース ---
+    const questionBank = [
+      { chapter: 1, difficulty: "基礎", generate: () => { 
+          const n = rName(); const s = r(dict.sports);
+          return r([
+            { instruction: "文型", text: `次の英文の S, V, C を下線を引いて指摘しなさい。\n${n} is a student.`, answer: `S: ${n}, V: is, C: a student` },
+            { instruction: "文型", text: `次の英文の S, V を下線を引いて指摘しなさい。\nThe dog runs fast.`, answer: `S: The dog, V: runs` },
+            { instruction: "文型", text: `次の英文の S, V, O を下線を引いて指摘しなさい。\n${n} likes playing ${s}.`, answer: `S: ${n}, V: likes, O: playing ${s}` }
+          ]);
+      }},
+      { chapter: 1, difficulty: "標準", generate: () => { 
+          const n = rName(); const i = r(dict.items);
+          return r([
+            { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\n${n} gave me ${i}.\n= ${n} gave ${i} (   ) me.`, answer: `to` },
+            { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nMy mother bought me a new dress.\n= My mother bought a new dress (   ) me.`, answer: `for` },
+            { instruction: "和訳", text: `次の英文を日本語になおしなさい。\nWe call the girl ${n}.`, answer: `私たちはその少女を${n}と呼びます。` }
+          ]);
+      }},
+      { chapter: 1, difficulty: "応用", generate: () => { 
+          return r([
+            { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n太陽は私たちに光と熱を与えてくれます。\n( gives / and / sun / heat / light / us / the / . )`, answer: `The sun gives us light and heat.` },
+            { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nこの辞書を私に貸してくれませんか。\n( lend / this dictionary / me / will / you / ? )`, answer: `Will you lend me this dictionary?` }
+          ]);
+      }},
+      { chapter: 2, difficulty: "基礎", generate: () => { 
+          const n = rName(); const c = r(dict.cities);
+          return r([
+            { instruction: "否定文", text: `次の各文を否定文に書きかえなさい。\n${n} is from ${c}.`, answer: `${n} is not [isn't] from ${c}.` },
+            { instruction: "疑問文", text: `次の各文を疑問文に書きかえなさい。\n${n} lives in this town.`, answer: `Does ${n} live in this town?` },
+            { instruction: "否定文", text: `次の各文を否定文に書きかえなさい。\nI went to the concert.`, answer: `I did not [didn't] go to the concert.` }
+          ]);
+      }},
+      { chapter: 2, difficulty: "標準", generate: () => { 
+          const isMale = Math.random() > 0.5;
+          const n = isMale ? r(dict.names_m) : r(dict.names_f);
+          const pronoun = isMale ? "he" : "she";
+          return r([
+            { instruction: "付加疑問文", text: `次の文の（　）に適する語を入れて、付加疑問文を完成しなさい。\n${n} isn't a student, (   ) (   )?`, answer: `is ${pronoun}` },
+            { instruction: "感嘆文", text: `次の文の（　）に適する語を入れて、感嘆文を完成しなさい。\n(   ) beautiful this flower is!`, answer: `How` },
+            { instruction: "命令文", text: `次の日本文の意味を表す英文を完成しなさい。\nドアを開けっぱなしにしてはいけません。\n(   ) leave the door open.`, answer: `Don't` }
+          ]);
+      }},
+      { chapter: 2, difficulty: "応用", generate: () => { 
+          const c = r(dict.cities);
+          return r([
+            { instruction: "誤文訂正", text: `次の英文の誤りの部分に下線を引いて、正しい表現を書きなさい。\nHow do you think of our new teacher?`, answer: `How -> What` },
+            { instruction: "誤文訂正", text: `次の英文の誤りの部分に下線を引いて、正しい表現を書きなさい。\nWhere is the capital of ${c}?`, answer: `Where -> What` }
+          ]);
+      }},
+      { chapter: 3, difficulty: "基礎", generate: () => {
+          const n = rName();
+          return r([
+            { instruction: "時制", text: `次の各文を will を使って未来の文に書きかえなさい。\nIt rains.`, answer: `It will rain.` },
+            { instruction: "時制", text: `次の各文を（　）内の指示に従って書きかえなさい。\n${n} uses this computer. （否定文に）`, answer: `${n} does not [doesn't] use this computer.` },
+            { instruction: "時制", text: `次の各文の（　）内の動詞を適する形になおしなさい。\nI ( be ) not at home last night.`, answer: `was` }
+          ]);
+      }},
+      { chapter: 3, difficulty: "標準", generate: () => {
+          const n = rName();
+          return r([
+            { instruction: "進行形", text: `次の各文を進行形の文になおしなさい。\nThe dog lies under the table.`, answer: `The dog is lying under the table.` },
+            { instruction: "助動詞", text: `（　）内の日本語を参考にして、（　）に will または shall を入れなさい。\n(   ) we climb the mountain next month? （〜しましょうか）`, answer: `Shall` },
+            { instruction: "時制の一致", text: `次の文の下線部の動詞を過去形にして、文全体を書きかえなさい。\nI think that ${n} can speak English.`, answer: `I thought that ${n} could speak English.` }
+          ]);
+      }},
+      { chapter: 3, difficulty: "応用", generate: () => { 
+          const n = rName(); 
+          return r([
+            { instruction: "並べかえ", text: `次の各文の（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n( arriving / is / seven / ${n} / at ) this evening.`, answer: `${n} is arriving at seven this evening.` },
+            { instruction: "英訳", text: `次の日本文を英文になおしなさい。\n私たちは雨がやんだら、出発するつもりです。`, answer: `We will start when it stops raining.` }
+          ]);
+      }},
+      { chapter: 4, difficulty: "基礎", generate: () => { 
+          const t = r(dict.time_past); const c = r(dict.cities);
+          return r([
+            { instruction: "完了形", text: `次の各組の文の（　）内の語句を加えて現在完了の文にしなさい。\nIt is cold. ( since ${t} )`, answer: `It has been cold since ${t}.` },
+            { instruction: "完了形", text: `日本文を参考にして、（　）に適する語を下から選んで入れなさい。\nShe has (   ) been to ${c}. （行ったことは一度もない）\n[ ever, never, for, yet, already, just, since ]`, answer: `never` }
+          ]);
+      }},
+      { chapter: 4, difficulty: "標準", generate: () => { 
+          const n = rName();
+          return r([
+            { instruction: "完了形", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n私は先月以来ずっと${n}を見かけていません。\nI (   )(   ) ${n} (   ) last month.`, answer: `have not seen [haven't seen] / since` },
+            { instruction: "完了進行形", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n昨日から雨が降ったりやんだりしています。\nIt (   )(   )(   ) on and off since yesterday.`, answer: `has been raining` }
+          ]);
+      }},
+      { chapter: 4, difficulty: "応用", generate: () => { 
+          return r([
+            { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。ただし、１語不要な語があります。\n私はこれほどすばらしい映画を今まで見たことがありません。\n( I / never / have / such / movie / seen / fantastic / a / . )`, answer: `I have never seen such a fantastic movie.` },
+            { instruction: "英訳", text: `次の日本文を英文になおしなさい。\n昨日図書館から借りてきた本を、私はちょうど読み終えたところです。`, answer: `I have just finished reading the book I borrowed from the library yesterday.` }
+          ]);
+      }},
+      { chapter: 5, difficulty: "基礎", generate: () => { 
+          const n = rName();
+          return r([
+            { instruction: "助動詞", text: `次の各文の（　）内から最も適する語を選びなさい。\nMy sister can ( play / plays / playing ) the piano very well.`, answer: `play` },
+            { instruction: "助動詞", text: `次の各文の（　）内から最も適する語を選びなさい。\n${n} ( may / can / must ) wash your hands before dinner.`, answer: `must` }
+          ]);
+      }},
+      { chapter: 5, difficulty: "標準", generate: () => { 
+          const n = rName();
+          return r([
+            { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt is not necessary for you to come here tomorrow.\nYou (   )(   ) come here tomorrow.`, answer: `don't have to` },
+            { instruction: "助動詞", text: `次の文の（　）に would または should を入れなさい。\nHe promised he (   ) finish the work by Friday.`, answer: `would` }
+          ]);
+      }},
+      { chapter: 5, difficulty: "応用", generate: () => { 
+          const n = rName();
+          return r([
+            { instruction: "並べかえ", text: `次の各文の（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n遅れたのは君の責任だ。( better / go / not / had / out / you ) now.`, answer: `You had better not go out now.` },
+            { instruction: "助動詞＋完了形", text: `次の各文の（　）内の日本語を参考にして、（　）に適する語を入れなさい。\n${n} (   )(   )(   ) such a thing. （そんなことをすべきでなかったのに）`, answer: `should not have done [ought not to have done]` }
+          ]);
+      }},
+      { chapter: 6, difficulty: "基礎", generate: () => { 
+          const n = rName(); const i = r(dict.items);
+          return r([
+            { instruction: "受動態", text: `次の各文を受動態の文に書きかえなさい。\n${n} uses this ${i.split(' ')[1]}.`, answer: `This ${i.split(' ')[1]} is used by ${n}.` },
+            { instruction: "受動態", text: `次の各文を受動態の文に書きかえなさい。\nThey built this house about one hundred years ago.`, answer: `This house was built about one hundred years ago.` }
+          ]);
+      }},
+      { chapter: 6, difficulty: "標準", generate: () => { 
+          return r([
+            { instruction: "受動態", text: `次の文の（　）に適する語を下から選んで入れなさい。\nThis desk is made (   ) wood. [ from, of, with, to ]`, answer: `of` },
+            { instruction: "群動詞の受動態", text: `次の各文を受動態の文に書きかえなさい。\nMany people listened to his speech.`, answer: `His speech was listened to by many people.` }
+          ]);
+      }},
+      { chapter: 6, difficulty: "応用", generate: () => { 
+          return r([
+            { instruction: "書き換え", text: `次の各文を（　）内の指示に従って書きかえなさい。\nHe told them to do the work. （SVO+to不定詞の受動態に）`, answer: `They were told to do the work by him.` },
+            { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nその山の頂上は1年中雪で覆われています。\nThe top of the mountain is ( snow / all / year / covered / round / with / . )`, answer: `The top of the mountain is covered with snow all year round.` }
+          ]);
+      }},
+      { chapter: 7, difficulty: "基礎", generate: () => { 
+          const t = r(dict.time_future); const c = r(dict.cities);
+          return r([
+            { instruction: "和訳", text: `次の英文を日本語になおしなさい。\nI want you to finish the work by ${t}.`, answer: `私はあなたに${t}までにその仕事を終わらせてほしい。` },
+            { instruction: "不定詞", text: `次の各文の（　）内の日本語を参考にして、（　）に適する語を入れなさい。\nI (   ) (   ) eat steak. （ステーキを食べたい）`, answer: `want to` }
+          ]);
+      }},
+      { chapter: 7, difficulty: "標準", generate: () => { 
+          const n = rName();
+          return r([
+            { instruction: "並べかえ", text: `次の各文の（　）内の語を並べかえて、意味の通る英文を完成しなさい。\n${n} ( do / things / to / a lot of / has ) today.`, answer: `${n} has a lot of things to do today.` },
+            { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nThe car is so expensive that I can't buy it.\nThe car is (   ) expensive (   ) me (   ) buy.`, answer: `too / for / to` }
+          ]);
+      }},
+      { chapter: 7, difficulty: "応用", generate: () => { 
+          return r([
+            { instruction: "形式主語", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n計画を立てるのは簡単だが、それを実行するのは難しい。\n(   ) is easy to make a plan, but difficult to carry it out.`, answer: `It` },
+            { instruction: "完了不定詞", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that he knows something about the accident.\nHe seems (   ) (   ) something about the accident.`, answer: `to know` }
+          ]);
+      }},
+      { chapter: 8, difficulty: "基礎", generate: () => { 
+          const s = r(dict.sports);
+          return r([
+            { instruction: "動名詞", text: `次の文の（　）内の語を適する形になおしなさい。\nHis hobby is ( watch ) stars.`, answer: `watching` },
+            { instruction: "動名詞", text: `次の各文の（　）内の語を適する形になおしなさい。\nShe is good at ( play ) the flute.`, answer: `playing` }
+          ]);
+      }},
+      { chapter: 8, difficulty: "標準", generate: () => { 
+          const n = rName();
+          return r([
+            { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nShe enjoyed playing tennis with ${n}.\nShe enjoyed (   ) with ${n}.`, answer: `playing tennis` },
+            { instruction: "動名詞と不定詞", text: `次の各組の英文の意味の違いに注意して、日本文になおしなさい。\n① She stopped looking at the stars.\n② She stopped to look at the stars.`, answer: `①彼女は星を見るのをやめた。\n②彼女は星を見るために立ち止まった。` }
+          ]);
+      }},
+      { chapter: 8, difficulty: "応用", generate: () => { 
+          return r([
+            { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nこれ以上議論してもむだです。\nIt is (   )(   ) arguing any more.`, answer: `no use [good]` },
+            { instruction: "意味上の主語", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nHe is proud that he has an expensive car.\nHe is proud (   )(   ) an expensive car.`, answer: `of having` }
+          ]);
+      }},
+      { chapter: 9, difficulty: "基礎", generate: () => r([
+        { instruction: "分詞", text: `次の各文の（　）内から適する語を選びなさい。\nLook at the baby ( sleeping / slept ) in the bed.`, answer: `sleeping` },
+        { instruction: "分詞", text: `次の各文の（　）内の語を適する形になおしなさい。\nThe girl ( sing ) on the stage is a famous TV personality.`, answer: `singing` }
+      ])},
+      { chapter: 9, difficulty: "標準", generate: () => r([
+        { instruction: "SVC", text: `次の各文の（　）内の語を適する形になおしなさい。\nHe sat ( read ) a book.`, answer: `reading` },
+        { instruction: "SVOC", text: `次の各文の（　）内の語を適する分詞になおしなさい。\nI heard Jane ( sing ) a song in the music room.`, answer: `singing` }
+      ])},
+      { chapter: 9, difficulty: "応用", generate: () => r([
+        { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nこれはおじが私にくれたギターです。\nThis is ( given / me / by / to / the guitar ) my uncle.`, answer: `the guitar given to me by` },
+        { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n彼女はかばんを2階に運んでもらいました。\nShe had her bag ( carried / upstairs ).`, answer: `carried upstairs` }
+      ])},
+      { chapter: 10, difficulty: "基礎", generate: () => r([
+        { instruction: "使役動詞", text: `次の英文を日本文になおしなさい。\nThe teacher made the boys stand up.`, answer: `先生はその男の子たちを立たせた。` },
+        { instruction: "使役動詞", text: `次の文の（　）内の語を適する形になおしなさい。\nI had Helen ( help ) me with my homework.`, answer: `help` }
+      ])},
+      { chapter: 10, difficulty: "標準", generate: () => r([
+        { instruction: "知覚動詞", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\n私は彼がそう言うのを聞きました。\nI ( him / say / heard ) so.`, answer: `heard him say` },
+        { instruction: "知覚動詞", text: `次の（　）内の語句を並べかえて、意味の通る文を完成しなさい。\nI saw ( fall / the woman ) down.`, answer: `the woman fall` }
+      ])},
+      { chapter: 10, difficulty: "応用", generate: () => r([
+        { instruction: "並べかえ", text: `日本文の意味を表す英文になるように、（　）内の語句を並べかえなさい。\nあなたはサルがバナナを食べるのをじっと見ていたのですか。\nWere you ( a monkey / a banana / watching / eat )?`, answer: `watching a monkey eat a banana` }
+      ])},
+      { chapter: 11, difficulty: "基礎", generate: () => r([
+        { instruction: "分詞構文", text: `次の各文を分詞構文を使った文に書きかえなさい。\nWhen I entered the room, I found her sleeping.`, answer: `Entering the room, I found her sleeping.` },
+        { instruction: "分詞構文", text: `次の各文を分詞構文を使った文に書きかえなさい。\nAs I had no money with me, I couldn't buy the book.`, answer: `Having no money with me, I couldn't buy the book.` }
+      ])},
+      { chapter: 11, difficulty: "標準", generate: () => r([
+        { instruction: "完了形・否定形", text: `次の各文を分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs she did not want to make him angry, she didn't say any more.\n(   )(   )(   ) make him angry, she didn't say any more.`, answer: `Not wanting to` }
+      ])},
+      { chapter: 11, difficulty: "応用", generate: () => r([
+        { instruction: "独立分詞構文", text: `次の各文を分詞構文を使った文に書きかえるとき、（　）に適する語を入れなさい。\nAs it was very hot, we went swimming.\n(   )(   ) very hot, we went swimming.`, answer: `It being` }
+      ])},
+      { chapter: 12, difficulty: "基礎", generate: () => r([
+        { instruction: "関係代名詞", text: `次の文の（　）に who, whose, whom のいずれかを入れなさい。\nThe boy (   ) is playing soccer is Jim.`, answer: `who` },
+        { instruction: "関係代名詞", text: `次の文の（　）に which, whose のいずれかを入れなさい。\nLook at the house (   ) roof is red.`, answer: `whose` }
+      ])},
+      { chapter: 12, difficulty: "標準", generate: () => r([
+        { instruction: "関係代名詞 what", text: `次の各文の（　）内から適する語を選びなさい。\n( Which, What, Who ) he said cannot be true.`, answer: `What` }
+      ])},
+      { chapter: 12, difficulty: "応用", generate: () => r([
+        { instruction: "非制限用法", text: `次の各組の英文の意味の違いに注意して、日本文になおしなさい。\n① He has three sons who work in the same factory.\n② He has three sons, who work in the same factory.`, answer: `①彼には同じ工場で働く3人の息子がいる。\n②彼には3人の息子がいて、(その3人は)同じ工場で働いている。` }
+      ])},
+      { chapter: 13, difficulty: "基礎", generate: () => r([
+        { instruction: "関係副詞", text: `次の文に（　）に適する関係副詞を入れなさい。\nThis is the village (   ) the well-known cook lives.`, answer: `where` }
+      ])},
+      { chapter: 13, difficulty: "標準", generate: () => r([
+        { instruction: "関係副詞", text: `次の2つの文を関係副詞を使って1つの文にしなさい。\nThat is the place. The accident happened there.`, answer: `That is the place where the accident happened.` }
+      ])},
+      { chapter: 13, difficulty: "応用", generate: () => r([
+        { instruction: "非制限用法", text: `次の各組の文が同じ内容になるように、（　）に適する語を入れなさい。\nI visited Kobe, and there I met an old friend of mine.\nI visited Kobe, (   ) I met an old friend of mine.`, answer: `where` }
+      ])},
+      { chapter: 14, difficulty: "基礎", generate: () => r([
+        { instruction: "比較", text: `次の語の比較級と最上級を書きなさい。\nbusy`, answer: `busier - busiest` },
+        { instruction: "原級", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n久美は私の妹と同じ年齢です。\nKumi is (   )(   )(   ) my sister.`, answer: `as old as` }
+      ])},
+      { chapter: 14, difficulty: "標準", generate: () => r([
+        { instruction: "比較", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n琵琶湖はこの湖の約3倍の大きさです。\nLake Biwa is about (   )(   )(   )(   ) this lake.`, answer: `three times as large as` }
+      ])},
+      { chapter: 14, difficulty: "応用", generate: () => r([
+        { instruction: "比較", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nNo one in our school plays tennis better than Mary.\nMary is the (   ) tennis player in our school.`, answer: `best` }
+      ])},
+      { chapter: 15, difficulty: "基礎", generate: () => r([
+        { instruction: "仮定法", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし私に翼があったら、君のところに飛んで行けるのに。\nIf I (   ) wings, I could fly to you.`, answer: `had` }
+      ])},
+      { chapter: 15, difficulty: "標準", generate: () => r([
+        { instruction: "仮定法過去完了", text: `次の各文を仮定法の文に書きかえるとき、（　）に適する語を入れなさい。\nAs I was so tired, I didn't play tennis.\nIf I (   )(   ) so tired, I (   )(   ) tennis.`, answer: `had not been / would have played` }
+      ])},
+      { chapter: 15, difficulty: "応用", generate: () => r([
+        { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nもし水がなかったら、どんな生物も生きていけないだろう。\n(   ) it (   )(   )(   ) water, no living things could exist.`, answer: `If / were not for` }
+      ])},
+      { chapter: 16, difficulty: "基礎", generate: () => r([
+        { instruction: "接続詞", text: `次の各文の（　）に and, but, or, for, so のいずれかを入れなさい。\nIt was raining hard, (   ) we decided not to go.`, answer: `so` }
+      ])},
+      { chapter: 16, difficulty: "標準", generate: () => r([
+        { instruction: "間接疑問文", text: `次の2つの文をそれぞれの書き出しに続けて、間接疑問文にしなさい。\nWhere did she go yesterday? / Do you know?\n-> Do you know (   ) (   ) (   ) yesterday?`, answer: `where she went` }
+      ])},
+      { chapter: 16, difficulty: "応用", generate: () => r([
+        { instruction: "接続詞", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIf you start at once, you won't be late.\nStart at once, (   ) you will be (   ) time.`, answer: `and / in` }
+      ])},
+      { chapter: 17, difficulty: "基礎", generate: () => r([
+        { instruction: "句と節", text: `次の文の下線部が名詞句ならA、形容詞句ならB、副詞句ならCを書きなさい。\nJim likes [listening to music].`, answer: `A` }
+      ])},
+      { chapter: 17, difficulty: "標準", generate: () => r([
+        { instruction: "書き換え", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nIt seems that Jane is fond of Japanese food.\nJane seems (   )(   ) fond of Japanese food.`, answer: `to be` }
+      ])},
+      { chapter: 17, difficulty: "応用", generate: () => r([
+        { instruction: "無生物主語", text: `次の各組の文がほぼ同じ内容になるように、（　）に適する語を入れなさい。\nWhy did you come here?\n(   )(   ) you here?`, answer: `What brought` }
+      ])},
+      { chapter: 18, difficulty: "基礎", generate: () => r([
+        { instruction: "時制の一致", text: `次の各文の（　）内から適する語を選びなさい。\nI thought that it ( will, would ) rain the next morning.`, answer: `would` }
+      ])},
+      { chapter: 18, difficulty: "標準", generate: () => r([
+        { instruction: "話法", text: `次の各文を間接話法の文に書きかえなさい。\nHe said to me, "I'm hungry."`, answer: `He told me that he was hungry.` }
+      ])},
+      { chapter: 18, difficulty: "応用", generate: () => r([
+        { instruction: "話法", text: `次の各文を間接話法の文に書きかえるとき、（　）に適する語を入れなさい。\nHe said to me, "Do it at once."\nHe (   ) me (   ) do it at once.`, answer: `told / to` }
+      ])},
+      { chapter: 19, difficulty: "基礎", generate: () => r([
+        { instruction: "名詞・冠詞", text: `次の（　）に a または an を入れなさい。\n(   ) useful animal / (   ) umbrella / (   ) year`, answer: `a / an / a` }
+      ])},
+      { chapter: 19, difficulty: "標準", generate: () => r([
+        { instruction: "名詞", text: `次の各文の（　）内の語を適する形になおしなさい。\nHow many ( knife ) are there on the plate?`, answer: `knives` }
+      ])},
+      { chapter: 19, difficulty: "応用", generate: () => r([
+        { instruction: "冠詞の省略", text: `次の各文の下線部の冠詞が必要なものには○、不要なものには×を書きなさい。\nChildren start [the] school at the age of six in this country.`, answer: `×` }
+      ])},
+      { chapter: 20, difficulty: "基礎", generate: () => r([
+        { instruction: "代名詞", text: `次の各文の（　）内から適する語を選びなさい。\n( Each, Both ) of my parents are alive.`, answer: `Both` }
+      ])},
+      { chapter: 20, difficulty: "標準", generate: () => r([
+        { instruction: "代名詞", text: `次の各文の（　）内から適する語を選びなさい。\nThe climate here is milder than ( that / those ) of Kyoto.`, answer: `that` }
+      ])},
+      { chapter: 20, difficulty: "応用", generate: () => r([
+        { instruction: "代名詞", text: `次の各文の（　）に適する語を入れなさい。\nSome come to school by bike, and (   ) on foot.`, answer: `others` }
+      ])},
+      { chapter: 21, difficulty: "基礎", generate: () => r([
+        { instruction: "形容詞・副詞", text: `次の文の（　）内の語を入れるとき、最も適する箇所を記号で答えなさい。\nHe is (a) a (b) speaker (c) of English. (good)`, answer: `(b)` }
+      ])},
+      { chapter: 21, difficulty: "標準", generate: () => r([
+        { instruction: "数量形容詞", text: `次の各文の（　）に最も適する語を選んで入れなさい。同じ語を2度使ってもかまいません。\nMy aunt is very sick; there is (   ) hope of her recovery. [ many / much / a few / a little / few / little ]`, answer: `little` }
+      ])},
+      { chapter: 21, difficulty: "応用", generate: () => r([
+        { instruction: "注意すべき副詞", text: `次の各文の（　）内から適切な語を選びなさい。\nJohn often comes ( late, lately ) to class.`, answer: `late` }
+      ])},
+      { chapter: 22, difficulty: "基礎", generate: () => r([
+        { instruction: "強調", text: `次の各文を、It is(was) ~ that ... の構文を使って下線部を強調する文をつくりなさい。\nTom broke [the window] yesterday.`, answer: `It was the window that Tom broke yesterday.` }
+      ])},
+      { chapter: 22, difficulty: "標準", generate: () => r([
+        { instruction: "否定", text: `次の各文の（　）内の日本文を参考にして、英文を完成しなさい。\n(   ) (   ) the students were absent. （生徒全員が欠席したわけではなかった）`, answer: `Not all` }
+      ])},
+      { chapter: 22, difficulty: "応用", generate: () => r([
+        { instruction: "慣用表現", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\n健康にはいくら注意してもしすぎることはありません。\nYou (   ) be (   ) careful of your health.`, answer: `cannot / too` }
+      ])},
+      { chapter: 23, difficulty: "基礎", generate: () => r([
+        { instruction: "前置詞", text: `次の文の（　）内から適切な語を選びなさい。\nI usually get up ( at / on / in ) seven ( at / on / in ) the morning.`, answer: `at / in` }
+      ])},
+      { chapter: 23, difficulty: "標準", generate: () => r([
+        { instruction: "前置詞", text: `日本文の意味を表す英文になるように、（　）に適する語を入れなさい。\nお茶を飲みながらその問題について話しましょう。\nLet's talk about the matter (   ) a cup of tea.`, answer: `over` }
+      ])},
+      { chapter: 23, difficulty: "応用", generate: () => r([
+        { instruction: "群前置詞", text: `次の各文の（　）内から適する語を選び、○で囲みなさい。\nHe bought a new camera ( instead of / in time for / by way of / in spite of ) twenty thousand yen.`, answer: `instead of` }
+      ])}
+    ];
 
+    function App() {
+      const [activeTab, setActiveTab] = useState('test');
 
-  // --- ハンドラー：生徒管理 ---
-  const addStudent = () => {
-    if (!newStudentName.trim()) return;
-    const newId = crypto.randomUUID();
-    setStudents([...students, { id: newId, name: newStudentName.trim() }]);
-    setNewStudentName("");
-    if (!scoreViewStudentId) setScoreViewStudentId(newId);
-  };
+      const [selectedChapters, setSelectedChapters] = useState([1, 2, 3]);
+      const [selectedDifficulties, setSelectedDifficulties] = useState(["基礎", "標準"]);
+      const [numQuestions, setNumQuestions] = useState(10);
+      const [testPaper, setTestPaper] = useState(null);
+      const [targetStudentId, setTargetStudentId] = useState("");
+      const [grading, setGrading] = useState({});
+      const [showAnswers, setShowAnswers] = useState(false); 
 
-  const removeStudent = (id) => {
-    if (window.confirm("この生徒と成績データを削除しますか？")) {
-      setStudents(students.filter(s => s.id !== id));
-      const newScores = { ...scores };
-      delete newScores[id];
-      setScores(newScores);
-      if (targetStudentId === id) setTargetStudentId("");
-      if (scoreViewStudentId === id) setScoreViewStudentId("");
-    }
-  };
+      const [students, setStudents] = useState([]);
+      const [scores, setScores] = useState({}); 
 
-  // --- ハンドラー：成績保存 ---
-  const saveGrades = () => {
-    if (!testPaper || !testPaper.studentId) {
-      alert("生徒が選択されていません。左のパネルから対象生徒を選択してテストを生成してから採点してください。");
-      return;
-    }
+      const [scoreViewStudentId, setScoreViewStudentId] = useState("");
+      const [newStudentName, setNewStudentName] = useState("");
 
-    if (Object.keys(grading).length < testPaper.questions.length) {
-      if (!window.confirm("未採点の問題があります。未採点の問題は不正解として集計しますがよろしいですか？")) {
-        return;
-      }
-    }
+      useEffect(() => {
+        const savedStudents = localStorage.getItem('leadEnglish_students');
+        const savedScores = localStorage.getItem('leadEnglish_scores');
+        if (savedStudents) setStudents(JSON.parse(savedStudents));
+        if (savedScores) setScores(JSON.parse(savedScores));
+      }, []);
 
-    const sid = testPaper.studentId;
-    const newScores = { ...scores };
-    if (!newScores[sid]) newScores[sid] = {};
+      useEffect(() => {
+        localStorage.setItem('leadEnglish_students', JSON.stringify(students));
+      }, [students]);
 
-    testPaper.questions.forEach((q, index) => {
-      const cid = q.chapter;
-      const isCorrect = grading[index] === true;
+      useEffect(() => {
+        localStorage.setItem('leadEnglish_scores', JSON.stringify(scores));
+      }, [scores]);
 
-      if (!newScores[sid][cid]) newScores[sid][cid] = { correct: 0, total: 0 };
-      
-      newScores[sid][cid].total += 1;
-      if (isCorrect) {
-        newScores[sid][cid].correct += 1;
-      }
-    });
+      const generateTest = () => {
+        if (selectedChapters.length === 0 || selectedDifficulties.length === 0) {
+          alert("出題範囲と難易度を1つ以上選択してください。");
+          return;
+        }
 
-    setScores(newScores);
-    alert("成績を保存しました！");
-    setScoreViewStudentId(sid);
-    setActiveTab('scores');
-  };
+        const availableTemplates = questionBank.filter(q => 
+          selectedChapters.includes(q.chapter) && selectedDifficulties.includes(q.difficulty)
+        );
 
+        if (availableTemplates.length === 0) {
+          alert("選択された条件に一致する問題データがありません。条件を広げてみてください。");
+          return;
+        }
 
-  return (
-    <div className="flex h-screen bg-gray-100 font-sans text-gray-800 overflow-hidden">
-      
-      {/* 印刷時には非表示になるサイドバー */}
-      <aside className="w-80 bg-white border-r border-gray-200 flex flex-col h-full print:hidden shadow-lg z-10 flex-shrink-0">
+        let questions = [];
         
-        {/* ヘッダー・タブ */}
-        <div className="p-6 border-b border-gray-200 bg-gray-50">
-          <div className="flex items-center gap-2 mb-6 text-indigo-700">
-            <BookOpen size={24} strokeWidth={2.5} />
-            <h1 className="text-lg font-bold tracking-tight">小テストメーカー</h1>
-          </div>
+        for (let i = 0; i < numQuestions; i++) {
+          let generated;
+          let retries = 0;
+          let template;
           
-          <div className="flex flex-col gap-2">
-            <button onClick={() => setActiveTab('test')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTab === 'test' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-gray-200 text-gray-600'}`}>
-              <RefreshCw size={18} /> テスト作成
-            </button>
-            <button onClick={() => setActiveTab('manage')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTab === 'manage' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-gray-200 text-gray-600'}`}>
-              <Users size={18} /> 生徒管理
-            </button>
-            <button onClick={() => setActiveTab('scores')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTab === 'scores' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-gray-200 text-gray-600'}`}>
-              <BarChart3 size={18} /> 正答率レポート
-            </button>
-          </div>
-        </div>
+          do {
+            template = r(availableTemplates);
+            generated = template.generate();
+            retries++;
+          } while (questions.some(q => q.text === generated.text) && retries < 20);
 
-        {/* --- タブ: テスト作成のメニュー --- */}
-        {activeTab === 'test' && (
-          <div className="p-6 overflow-y-auto flex-1 space-y-6">
-            <section>
-              <h2 className="flex items-center gap-2 font-semibold text-gray-700 mb-3 pb-2 border-b"><Users size={16} /> 対象生徒 (印字用)</h2>
-              <select 
-                value={targetStudentId} 
-                onChange={(e) => setTargetStudentId(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
-                <option value="">-- 指定なし (空欄) --</option>
-                {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </section>
+          questions.push({
+            ...generated,
+            chapter: template.chapter
+          });
+        }
 
-            <section>
-              <h2 className="flex items-center gap-2 font-semibold text-gray-700 mb-3 pb-2 border-b"><Settings size={16} /> 難易度</h2>
-              <div className="flex flex-wrap gap-2">
-                {difficulties.map(diff => (
-                  <button key={diff}
-                    onClick={() => setSelectedDifficulties(p => p.includes(diff) ? p.filter(d => d !== diff) : [...p, diff])}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${selectedDifficulties.includes(diff) ? 'bg-indigo-100 border-indigo-300 text-indigo-800' : 'bg-white border-gray-300 text-gray-600'}`}
-                  >
-                    {diff}
-                  </button>
-                ))}
-              </div>
-            </section>
+        const today = new Date();
+        const targetStudent = students.find(s => s.id === targetStudentId);
 
-            <section>
-              <h2 className="font-semibold text-gray-700 mb-3 pb-2 border-b flex justify-between">
-                <span>出題範囲 (複数可)</span>
-                <span className="text-xs text-indigo-600 cursor-pointer hover:underline" onClick={() => setSelectedChapters(availableChapters.map(c=>c.id))}>全選択</span>
-              </h2>
-              <div className="space-y-1 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                {availableChapters.map(ch => (
-                  <label key={ch.id} className="flex items-center gap-3 p-1.5 hover:bg-gray-50 rounded cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
-                      checked={selectedChapters.includes(ch.id)}
-                      onChange={() => setSelectedChapters(p => p.includes(ch.id) ? p.filter(c => c !== ch.id) : [...p, ch.id])}
-                    />
-                    <span className="text-sm text-gray-700 line-clamp-1" title={ch.title}>{ch.title}</span>
-                  </label>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h2 className="font-semibold text-gray-700 mb-3 pb-2 border-b">問題数: {numQuestions} 問</h2>
-              <input type="range" min="5" max="30" step="1" value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))} className="w-full accent-indigo-600" />
-            </section>
-
-            <div className="pt-4 border-t border-gray-200 space-y-3">
-              <button onClick={generateTest} className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg font-semibold shadow-sm">
-                <RefreshCw size={18} /> テストを再生成
-              </button>
-              <button onClick={() => window.print()} className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 py-2.5 px-4 rounded-lg font-semibold shadow-sm">
-                <Printer size={18} /> 印刷する (A4)
-              </button>
-            </div>
-          </div>
-        )}
-
-      </aside>
-
-      {/* --- メインコンテンツエリア --- */}
-      <main className="flex-1 overflow-y-auto bg-gray-200 print:bg-white relative">
+        setTestPaper({
+          date: `${today.getFullYear()}年 ${today.getMonth() + 1}月 ${today.getDate()}日`,
+          studentId: targetStudentId,
+          studentName: targetStudent ? targetStudent.name : "",
+          questions: questions,
+          chapters: selectedChapters
+        });
         
-        {/* テストプレビュー画面 */}
-        {activeTab === 'test' && testPaper && (
-          <div className="p-8 print:p-0 flex justify-center min-h-full">
-            <div className="w-[210mm] bg-white shadow-xl min-h-[297mm] p-12 print:shadow-none print:m-0 print:w-full print:p-0 box-border relative">
-              
-              <div className="border-b-2 border-black pb-4 mb-8 flex flex-col gap-4">
-                <div className="flex justify-between items-end">
-                  <h1 className="text-3xl font-bold tracking-widest text-gray-900">英文法 小テスト</h1>
-                  <div className="flex flex-col items-end gap-3">
-                    <div className="text-right text-sm font-medium">実施日： {testPaper.date}</div>
-                    <label className="print:hidden flex items-center gap-2 cursor-pointer bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-200 transition-colors select-none shadow-sm">
-                      <input 
-                        type="checkbox" 
-                        checked={showAnswers} 
-                        onChange={e => setShowAnswers(e.target.checked)} 
-                        className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer" 
-                      />
-                      <span className="text-sm font-bold text-gray-700">解答を表示する</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="flex justify-end items-end gap-6 text-lg font-medium">
-                  <div>氏名：<span className="border-b border-gray-500 inline-block w-48 text-center">{testPaper.studentName || ""}</span></div>
-                  <div className="ml-4 border-2 border-gray-400 w-24 h-16 flex items-center justify-center relative">
-                    <span className="text-gray-400 text-xs absolute top-1 left-1">得点</span>
-                    <span className="text-xl font-bold print:hidden">
-                      {Object.values(grading).filter(v => v).length} / {testPaper.questions.length}
-                    </span>
-                  </div>
-                </div>
+        setGrading({});
+        setActiveTab('test');
+      };
+
+      useEffect(() => {
+        if(!testPaper) generateTest();
+      }, []);
+
+      const addStudent = () => {
+        if (!newStudentName.trim()) return;
+        const newId = crypto.randomUUID();
+        setStudents([...students, { id: newId, name: newStudentName.trim() }]);
+        setNewStudentName("");
+        if (!scoreViewStudentId) setScoreViewStudentId(newId);
+      };
+
+      const removeStudent = (id) => {
+        if (window.confirm("この生徒と成績データを削除しますか？")) {
+          setStudents(students.filter(s => s.id !== id));
+          const newScores = { ...scores };
+          delete newScores[id];
+          setScores(newScores);
+          if (targetStudentId === id) setTargetStudentId("");
+          if (scoreViewStudentId === id) setScoreViewStudentId("");
+        }
+      };
+
+      const saveGrades = () => {
+        if (!testPaper || !testPaper.studentId) {
+          alert("生徒が選択されていません。左のパネルから対象生徒を選択してテストを生成してから採点してください。");
+          return;
+        }
+
+        if (Object.keys(grading).length < testPaper.questions.length) {
+          if (!window.confirm("未採点の問題があります。未採点の問題は不正解として集計しますがよろしいですか？")) {
+            return;
+          }
+        }
+
+        const sid = testPaper.studentId;
+        const newScores = { ...scores };
+        if (!newScores[sid]) newScores[sid] = {};
+
+        testPaper.questions.forEach((q, index) => {
+          const cid = q.chapter;
+          const isCorrect = grading[index] === true;
+
+          if (!newScores[sid][cid]) newScores[sid][cid] = { correct: 0, total: 0 };
+          
+          newScores[sid][cid].total += 1;
+          if (isCorrect) {
+            newScores[sid][cid].correct += 1;
+          }
+        });
+
+        setScores(newScores);
+        alert("成績を保存しました！");
+        setScoreViewStudentId(sid);
+        setActiveTab('scores');
+      };
+
+      return (
+        <div className="flex h-screen overflow-hidden">
+          
+          {/* 左サイドバー */}
+          <aside className="w-80 bg-white border-r border-gray-200 flex flex-col h-full print:hidden shadow-lg z-10 flex-shrink-0">
+            <div className="p-6 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-2 mb-6 text-indigo-700">
+                <IconBook size={24} />
+                <h1 className="text-lg font-bold tracking-tight">小テストメーカー</h1>
               </div>
-
-              <ol className="list-none space-y-7 mb-12">
-                {testPaper.questions.map((q, index) => (
-                  <li key={index} className="flex gap-4 break-inside-avoid relative group">
-                    <span className="font-bold text-lg mt-0.5">{index + 1}.</span>
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-700 text-sm mb-1.5 flex items-center gap-2">
-                        <span className="bg-gray-200 px-2 py-0.5 rounded text-xs">【{q.instruction}】</span>
-                      </p>
-                      <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-900 mb-3">{q.text}</p>
-                      
-                      {showAnswers && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mb-3 text-sm font-bold shadow-sm">
-                          解答： {q.answer}
-                        </div>
-                      )}
-
-                      <div className="w-full border-b border-gray-400 mt-4 h-6"></div>
-                    </div>
-                    {/* 採点用UI（印刷時には非表示） */}
-                    <div className="flex gap-2 items-start ml-2 print:hidden select-none">
-                      <button 
-                        onClick={() => setGrading({...grading, [index]: true})} 
-                        className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${grading[index] === true ? 'bg-green-500 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                      >
-                        〇
-                      </button>
-                      <button 
-                        onClick={() => setGrading({...grading, [index]: false})} 
-                        className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${grading[index] === false ? 'bg-red-500 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-
-              {/* 成績保存ボタン（印刷時非表示） */}
-              {testPaper.studentId && (
-                <div className="print:hidden border-t-2 border-dashed border-gray-300 pt-6 mt-8">
-                  <div className="flex items-center justify-between bg-indigo-50 p-4 rounded-lg">
-                    <div className="text-indigo-800">
-                      <span className="font-bold">{testPaper.studentName}</span> さんの採点結果を記録します。
-                    </div>
-                    <button 
-                      onClick={saveGrades}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-sm"
-                    >
-                      <Save size={18} /> 成績を保存する
-                    </button>
-                  </div>
-                </div>
-              )}
-              {!testPaper.studentId && (
-                <div className="print:hidden border-t-2 border-dashed border-gray-300 pt-6 mt-8">
-                  <div className="text-gray-500 text-center text-sm p-4 bg-gray-50 rounded-lg">
-                    左側のパネルで対象生徒を選択してテストを生成すると、採点して成績を記録できます。
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 生徒管理画面 */}
-        {activeTab === 'manage' && (
-          <div className="p-8 max-w-4xl mx-auto space-y-8">
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><GraduationCap /> 生徒の登録</h2>
-              <div className="flex gap-3">
-                <input 
-                  type="text" 
-                  value={newStudentName}
-                  onChange={e => setNewStudentName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addStudent()}
-                  placeholder="生徒名を入力 (例: 山田 太郎)"
-                  className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                />
-                <button onClick={addStudent} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors">
-                  <Plus size={18} /> 登録
+              
+              <div className="flex flex-col gap-2">
+                <button onClick={() => setActiveTab('test')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTab === 'test' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-gray-200 text-gray-600'}`}>
+                  <IconRefresh size={18} /> テスト作成
+                </button>
+                <button onClick={() => setActiveTab('manage')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTab === 'manage' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-gray-200 text-gray-600'}`}>
+                  <IconUsers size={18} /> 生徒管理
+                </button>
+                <button onClick={() => setActiveTab('scores')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTab === 'scores' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-gray-200 text-gray-600'}`}>
+                  <IconChart size={18} /> 正答率レポート
                 </button>
               </div>
-              
-              <div className="mt-6 flex flex-wrap gap-3">
-                {students.map(s => (
-                  <div key={s.id} className="bg-gray-100 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-3">
-                    <span className="font-medium text-gray-700">{s.name}</span>
-                    <button onClick={() => removeStudent(s.id)} className="text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
-                  </div>
-                ))}
-                {students.length === 0 && <p className="text-gray-400 text-sm">登録された生徒はいません。</p>}
-              </div>
             </div>
-          </div>
-        )}
 
-        {/* 成績レポート画面 */}
-        {activeTab === 'scores' && (
-          <div className="p-8 max-w-5xl mx-auto">
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-              <div className="flex justify-between items-center mb-8 pb-4 border-b">
-                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><BarChart3 /> 生徒別 正答率レポート</h2>
-                <select 
-                  value={scoreViewStudentId}
-                  onChange={e => setScoreViewStudentId(e.target.value)}
-                  className="p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 font-medium"
-                >
-                  <option value="">生徒を選択...</option>
-                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+            {activeTab === 'test' && (
+              <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                <section>
+                  <h2 className="flex items-center gap-2 font-semibold text-gray-700 mb-3 pb-2 border-b"><IconUsers size={16} /> 対象生徒 (印字用)</h2>
+                  <select value={targetStudentId} onChange={(e) => setTargetStudentId(e.target.value)} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="">-- 指定なし (空欄) --</option>
+                    {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </section>
+
+                <section>
+                  <h2 className="flex items-center gap-2 font-semibold text-gray-700 mb-3 pb-2 border-b"><IconSettings size={16} /> 難易度</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {difficulties.map(diff => (
+                      <button key={diff} onClick={() => setSelectedDifficulties(p => p.includes(diff) ? p.filter(d => d !== diff) : [...p, diff])} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${selectedDifficulties.includes(diff) ? 'bg-indigo-100 border-indigo-300 text-indigo-800' : 'bg-white border-gray-300 text-gray-600'}`}>
+                        {diff}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <section>
+                  <h2 className="font-semibold text-gray-700 mb-3 pb-2 border-b flex justify-between">
+                    <span>出題範囲 (複数可)</span>
+                    <span className="text-xs text-indigo-600 cursor-pointer hover:underline" onClick={() => setSelectedChapters(availableChapters.map(c=>c.id))}>全選択</span>
+                  </h2>
+                  <div className="space-y-1 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {availableChapters.map(ch => (
+                      <label key={ch.id} className="flex items-center gap-3 p-1.5 hover:bg-gray-50 rounded cursor-pointer">
+                        <input type="checkbox" className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" checked={selectedChapters.includes(ch.id)} onChange={() => setSelectedChapters(p => p.includes(ch.id) ? p.filter(c => c !== ch.id) : [...p, ch.id])} />
+                        <span className="text-sm text-gray-700 line-clamp-1" title={ch.title}>{ch.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+
+                <section>
+                  <h2 className="font-semibold text-gray-700 mb-3 pb-2 border-b">問題数: {numQuestions} 問</h2>
+                  <input type="range" min="5" max="30" step="1" value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))} className="w-full accent-indigo-600" />
+                </section>
+
+                <div className="pt-4 border-t border-gray-200 space-y-3">
+                  <button onClick={generateTest} className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg font-semibold shadow-sm">
+                    <IconRefresh size={18} /> テストを再生成
+                  </button>
+                  <button onClick={() => window.print()} className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 py-2.5 px-4 rounded-lg font-semibold shadow-sm">
+                    <IconPrinter size={18} /> 印刷する (A4)
+                  </button>
+                </div>
               </div>
+            )}
+          </aside>
 
-              {!scoreViewStudentId ? (
-                <div className="text-center py-12 text-gray-400 font-medium">右上のメニューから生徒を選択してください。</div>
-              ) : (
-                <div className="space-y-6">
-                  {availableChapters.map(ch => {
-                    const data = scores[scoreViewStudentId]?.[ch.id];
-                    if (!data || data.total === 0) return null;
-                    const percent = Math.round((data.correct / data.total) * 100);
-                    return (
-                      <div key={ch.id} className="flex flex-col gap-2">
-                        <div className="flex justify-between items-end">
-                          <span className="font-semibold text-gray-700">{ch.title}</span>
-                          <span className="text-sm font-bold text-gray-500">{data.correct} / {data.total} 問正解 <span className={`ml-2 px-2 py-0.5 rounded text-white ${percent >= 80 ? 'bg-green-500' : percent >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}>{percent}%</span></span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                          <div 
-                            className={`h-3 rounded-full transition-all duration-1000 ${percent >= 80 ? 'bg-green-500' : percent >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`} 
-                            style={{ width: `${percent}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
+          {/* メインエリア */}
+          <main className="flex-1 overflow-y-auto relative print:bg-white print:p-0">
+            {activeTab === 'test' && testPaper && (
+              <div className="p-8 print:p-0 flex justify-center min-h-full">
+                <div className="w-[210mm] bg-white shadow-xl min-h-[297mm] p-12 print:shadow-none print:m-0 print:w-full print:p-0 box-border relative">
                   
-                  {(!scores[scoreViewStudentId] || Object.keys(scores[scoreViewStudentId]).length === 0) && (
-                    <div className="text-center py-12 text-gray-400 font-medium">まだこの生徒の成績データが登録されていません。</div>
+                  <div className="border-b-2 border-black pb-4 mb-8 flex flex-col gap-4">
+                    <div className="flex justify-between items-end">
+                      <h1 className="text-3xl font-bold tracking-widest text-gray-900">英文法 小テスト</h1>
+                      <div className="flex flex-col items-end gap-3">
+                        <div className="text-right text-sm font-medium">実施日： {testPaper.date}</div>
+                        <label className="print:hidden flex items-center gap-2 cursor-pointer bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-200 transition-colors select-none shadow-sm">
+                          <input type="checkbox" checked={showAnswers} onChange={e => setShowAnswers(e.target.checked)} className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer" />
+                          <span className="text-sm font-bold text-gray-700">解答を表示する</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex justify-end items-end gap-6 text-lg font-medium">
+                      <div>氏名：<span className="border-b border-gray-500 inline-block w-48 text-center">{testPaper.studentName || ""}</span></div>
+                      <div className="ml-4 border-2 border-gray-400 w-24 h-16 flex items-center justify-center relative">
+                        <span className="text-gray-400 text-xs absolute top-1 left-1">得点</span>
+                        <span className="text-xl font-bold print:hidden">
+                          {Object.values(grading).filter(v => v).length} / {testPaper.questions.length}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ol className="list-none space-y-7 mb-12">
+                    {testPaper.questions.map((q, index) => (
+                      <li key={index} className="flex gap-4 break-inside-avoid relative group">
+                        <span className="font-bold text-lg mt-0.5">{index + 1}.</span>
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-700 text-sm mb-1.5 flex items-center gap-2">
+                            <span className="bg-gray-200 px-2 py-0.5 rounded text-xs">【{q.instruction}】</span>
+                          </p>
+                          <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-900 mb-3">{q.text}</p>
+                          
+                          {showAnswers && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mb-3 text-sm font-bold shadow-sm">
+                              解答： {q.answer}
+                            </div>
+                          )}
+
+                          <div className="w-full border-b border-gray-400 mt-4 h-6"></div>
+                        </div>
+                        <div className="flex gap-2 items-start ml-2 print:hidden select-none">
+                          <button onClick={() => setGrading({...grading, [index]: true})} className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${grading[index] === true ? 'bg-green-500 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>〇</button>
+                          <button onClick={() => setGrading({...grading, [index]: false})} className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${grading[index] === false ? 'bg-red-500 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>×</button>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+
+                  {testPaper.studentId && (
+                    <div className="print:hidden border-t-2 border-dashed border-gray-300 pt-6 mt-8">
+                      <div className="flex items-center justify-between bg-indigo-50 p-4 rounded-lg">
+                        <div className="text-indigo-800">
+                          <span className="font-bold">{testPaper.studentName}</span> さんの採点結果を記録します。
+                        </div>
+                        <button onClick={saveGrades} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-sm">
+                          <IconSave size={18} /> 成績を保存する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {!testPaper.studentId && (
+                    <div className="print:hidden border-t-2 border-dashed border-gray-300 pt-6 mt-8">
+                      <div className="text-gray-500 text-center text-sm p-4 bg-gray-50 rounded-lg">
+                        左側のパネルで対象生徒を選択してテストを生成すると、採点して成績を記録できます。
+                      </div>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
 
-      </main>
+            {activeTab === 'manage' && (
+              <div className="p-8 max-w-4xl mx-auto space-y-8">
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><IconGraduation size={24} /> 生徒の登録</h2>
+                  <div className="flex gap-3">
+                    <input type="text" value={newStudentName} onChange={e => setNewStudentName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addStudent()} placeholder="生徒名を入力 (例: 山田 太郎)" className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+                    <button onClick={addStudent} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+                      <IconPlus size={18} /> 登録
+                    </button>
+                  </div>
+                  
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    {students.map(s => (
+                      <div key={s.id} className="bg-gray-100 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-3">
+                        <span className="font-medium text-gray-700">{s.name}</span>
+                        <button onClick={() => removeStudent(s.id)} className="text-red-400 hover:text-red-600"><IconTrash size={16} /></button>
+                      </div>
+                    ))}
+                    {students.length === 0 && <p className="text-gray-400 text-sm">登録された生徒はいません。</p>}
+                  </div>
+                </div>
+              </div>
+            )}
 
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          @page { size: A4 portrait; margin: 15mm; }
-          body { background-color: white !important; -webkit-print-color-adjust: exact; }
-          .custom-scrollbar::-webkit-scrollbar { display: none; }
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-      `}} />
-    </div>
-  );
-}
+            {activeTab === 'scores' && (
+              <div className="p-8 max-w-5xl mx-auto">
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                  <div className="flex justify-between items-center mb-8 pb-4 border-b">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><IconChart size={28} /> 生徒別 正答率レポート</h2>
+                    <select value={scoreViewStudentId} onChange={e => setScoreViewStudentId(e.target.value)} className="p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 font-medium">
+                      <option value="">生徒を選択...</option>
+                      {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+
+                  {!scoreViewStudentId ? (
+                    <div className="text-center py-12 text-gray-400 font-medium">右上のメニューから生徒を選択してください。</div>
+                  ) : (
+                    <div className="space-y-6">
+                      {availableChapters.map(ch => {
+                        const data = scores[scoreViewStudentId]?.[ch.id];
+                        if (!data || data.total === 0) return null;
+                        const percent = Math.round((data.correct / data.total) * 100);
+                        return (
+                          <div key={ch.id} className="flex flex-col gap-2">
+                            <div className="flex justify-between items-end">
+                              <span className="font-semibold text-gray-700">{ch.title}</span>
+                              <span className="text-sm font-bold text-gray-500">{data.correct} / {data.total} 問正解 <span className={`ml-2 px-2 py-0.5 rounded text-white ${percent >= 80 ? 'bg-green-500' : percent >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}>{percent}%</span></span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                              <div className={`h-3 rounded-full transition-all duration-1000 ${percent >= 80 ? 'bg-green-500' : percent >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${percent}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {(!scores[scoreViewStudentId] || Object.keys(scores[scoreViewStudentId]).length === 0) && (
+                        <div className="text-center py-12 text-gray-400 font-medium">まだこの生徒の成績データが登録されていません。</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
